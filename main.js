@@ -4,8 +4,9 @@ const {app, globalShortcut, ipcMain ,BrowserWindow} = electron
 let win = null
 
 app.on('ready', () => {
-    win = new BrowserWindow({width: 900, width: 800})
+    win = new BrowserWindow({width: 1280, height: 720})
     win.loadURL(`file://${__dirname}/index.html`)
+    win.toggleDevTools();
 
 
     // Register a 'MediaPlayPause' shortcut listener.
