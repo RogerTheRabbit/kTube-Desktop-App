@@ -7,6 +7,9 @@ app.on('ready', () => {
     win = new BrowserWindow({width: 1280, height: 720})
     win.loadURL(`file://${__dirname}/index.html`)
     win.toggleDevTools();
+    win.setTitle("kTube")
+    win.setIcon("./resources/kTube_Icon.png");
+    // win.setMenu(null);
 
 
     // Register a 'MediaPlayPause' shortcut listener.
