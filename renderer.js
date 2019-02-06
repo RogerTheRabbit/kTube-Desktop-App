@@ -14,8 +14,6 @@
         //    after the API code downloads.
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
-                height: '390',
-                width: '640',
                 videoId: curId,
                 events: {
                 'onReady': onPlayerReady,
@@ -29,20 +27,27 @@
             player.playVideo();
         }
 
-        // 5. The API calls this function when the player's state changes.
-        //    The function indicates that when playing a video (state=1),
-        //    the player should play for six seconds and then stop.
-        // var done = false;
-        function onPlayerStateChange(event) {
-            // if (event.data == YT.PlayerState.PLAYING && !done) {
-            //   setTimeout(stopVideo, 6000);
-            //   done = true;
-            // }
+
+        document.getElementById("search").onkeydown = function(event) {
+            if(event.keyCode == 13) {
+                search();    
+            }
         }
 
-        function stopVideo(event) {
-            event.target.stopVideo();
+
+        function search() {
+            var q = document.getElementById("search").value;
+            q = encodeURIComponent(q);
+            url = "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=" + q +"&type=video&key=" + key
+            $.getJSON(url, function(data) {
+                curId = data.items[0].id.videoId;
+                player.loadVideoById(player.videoId = curId);
+                addHist(curId);
+            })
+            document.getElementById("search").value = "";
         }
+
+
 
         function addHist(id) {
             if (watchHist.length >= MAXWATCHHIST)
@@ -57,7 +62,6 @@
             }
             else {
                 histPos--;
-                console.log(watchHist.length - 1 - histPos)
                 changeVideo(watchHist[watchHist.length - 1 - histPos]);
             }
         }
@@ -65,7 +69,6 @@
         function playPrevious() {
             if (histPos < watchHist.length - 1) {
                 histPos++;
-                console.log(watchHist.length - 1 - histPos)
                 changeVideo(watchHist[watchHist.length - 1 - histPos]);
             }
         }
