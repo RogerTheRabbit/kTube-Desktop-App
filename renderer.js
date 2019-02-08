@@ -29,22 +29,42 @@
 
 
         document.getElementById("search").onkeydown = function(event) {
+            resetSearch(false)
             if(event.keyCode == 13) {
-                search();    
+                search();
             }
         }
 
+        function changeVideoWithId(id) {
+            changeVideo(id);
+            addHist(id);
+            resetSearch()
+        }
+
+        function resetSearch(resetQ=true) {
+            document.getElementById("queryResultContainer").innerHTML = "";
+            if(resetQ)
+                document.getElementById("search").value = "";
+        }
 
         function search() {
             var q = document.getElementById("search").value;
             q = encodeURIComponent(q);
             url = "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=" + q +"&type=video&key=" + key
             $.getJSON(url, function(data) {
-                curId = data.items[0].id.videoId;
-                player.loadVideoById(player.videoId = curId);
-                addHist(curId);
+                for(x = 0; x<= data.items.length; x++) {
+                    (document.getElementById("queryResultContainer")).innerHTML += 
+                        `
+                        <div class="queryResult" onclick="changeVideoWithId('${data.items[0].id.videoId}')">
+                            <img src="${data.items[x].snippet.thumbnails.default.url}" alt="">
+                            <div class="queryResultText">
+                                <h4>${data.items[x].snippet.title}</h4>
+                                <h6>${data.items[x].snippet.channelTitle} - 5:06</h6>
+                            </div>
+                        </div>
+                        `;
+                }
             })
-            document.getElementById("search").value = "";
         }
 
 

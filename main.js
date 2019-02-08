@@ -35,7 +35,6 @@ app.on('ready', () => {
 
 
     // Register a 'MediaNextTrack' shortcut listener.
-    // TODO: Add handler in render process for this
     const MediaNextTrack  = globalShortcut.register('MediaNextTrack', () => {
         win.webContents.send('MediaNextTrack', 'MediaNextTrack')
     })
@@ -46,7 +45,6 @@ app.on('ready', () => {
 
 
     // Register a 'MediaPreviousTrack' shortcut listener.
-    // TODO: Add handler in render process for this
     const MediaPreviousTrack  = globalShortcut.register('MediaPreviousTrack', () => {
         win.webContents.send('MediaPreviousTrack', 'MediaPreviousTrack')
     })
