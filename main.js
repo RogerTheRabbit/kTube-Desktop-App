@@ -8,7 +8,9 @@ const URL = require('url').URL;
 let win = null;
 app.on('ready', () => {
     win = new BrowserWindow({width: 1280, height: 720})
+    
     win.loadURL(`file://${__dirname}/index.html`)
+    win.setMinimumSize(600, 600)
     win.toggleDevTools();
     win.setTitle("kTube");
     win.setIcon("./resources/kTube_Icon.png");
