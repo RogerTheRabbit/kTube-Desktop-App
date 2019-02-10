@@ -17,76 +17,32 @@
     <!-- <nav class="navbar navbar-expand-lg navbar-dark indigo"> -->
 
     <div class="container color-block rare-wind-gradient z-depth-1">
-  
-  
-  
-        <!--Nothing to see here-->
-      
-      
-      
-      
-      
-      </div>
-
+      <div id="player" class="z-depth-2" hidden="true"></div>
+      <!--Nothing to see here-->
+    </div>
 
     <div class="nav">
       <div class="form-inline md-form">
-          <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search" id="search">
-          <button class="btn aqua-gradient btn-rounded btn-sm my-0" type="button" onclick="search()">Search</button>
-          <!-- <button type="button" class="btn btn-rounded btn-sm btn-outline-default">Default</button> -->
-          
-          <!-- Material inline 1 -->
-          <!-- <div class="form-check form-check-inline">
-            <input type="radio" class="form-check-input" id="materialInline1" name="inlineMaterialRadiosExample">
-            <label class="form-check-label" for="materialInline1">1</label>
-          </div>-->
-          
-          <!-- Material inline 2 -->
-          <!-- <div class="form-check form-check-inline">
-            <input type="radio" class="form-check-input" id="materialInline2" name="inlineMaterialRadiosExample">
-            <label class="form-check-label" for="materialInline2">2</label>
-          </div> -->
-      </div>  
-      <div class="z-depth-1" id="queryResultContainer"></div>
+        <input class="form-control mr-sm-2 " type="text" placeholder="Search" aria-label="Search" id="search">
+        <button class="btn aqua-gradient btn-rounded btn-sm my-0" onclick="search()" type="button">Search</button>
+        <!-- id="queryResultContainer" -->
+      </div>
+      <div class="z-depth-1 " id="queryResultContainer"></div>
     </div>
 
     <div id="controls">
-
-      <img src="./resources/kTube_Icon.png" alt="" id="thumbnail">
-
-      <a class="btn-floating btn-lg purple-gradient btn-rounded"><i class="fas fa-play"></i></a>
-      <a class="btn-floating btn-lg purple-gradient btn-rounded"><i class="fas fa-pause"></i></a>
-      <a class="btn-floating btn-lg purple-gradient btn-rounded"><i class="fas fa-stop"></i></a>
-      <a class="btn-floating btn-lg purple-gradient btn-rounded"><i class="fas fa-backward"></i></a>
-      <a class="btn-floating btn-lg purple-gradient btn-rounded"><i class="fas fa-forward"></i></a>
-
-    </div>
-
-
-    <div id="player" class="z-depth-2" hidden="true"></div>
-
-    
-    
-    <!-- <div id="list">
-      <div class="list-group">
-        <li class="list-group-item active">
-          <div class="md-v-line"></div><i class="fas fa-laptop mr-4 pr-3"></i> Cras justo odio
-        </li>
-        <li class="list-group-item">
-          <div class="md-v-line"></div><i class="fas fa-bomb mr-5"></i>Dapibus ac facilisis in
-        </li>
-        <li class="list-group-item">
-          <div class="md-v-line"></div><i class="fas fa-code mr-5"></i>Morbi leo risus
-        </li>
-        <li class="list-group-item">
-          <div class="md-v-line"></div><i class="far fa-gem mr-5"></i>Porta ac consectetur ac
-        </li>
-        <li class="list-group-item">
-          <div class="md-v-line"></div><i class="fas fa-cogs mr-5"></i>Vestibulum at eros
-        </li>
-
+      <div id="test">
+        <img src="./resources/kTube_Icon.png" alt="" id="thumbnail">
+        <div class="mediaControls">
+          <a class="btn-floating btn-lg purple-gradient btn-rounded" onclick="player.playVideo()"><i class="fas fa-play"></i></a>
+          <a class="btn-floating btn-lg purple-gradient btn-rounded" onclick="pauseVideo()"><i class="fas fa-pause"></i></a>
+          <a class="btn-floating btn-lg purple-gradient btn-rounded" onclick="player.stopVideo()"><i class="fas fa-stop"></i></a>
+          <a class="btn-floating btn-lg purple-gradient btn-rounded" onclick="playPrevious()"><i class="fas fa-backward"></i></a>
+          <a class="btn-floating btn-lg purple-gradient btn-rounded" onclick="playNext()"><i class="fas fa-forward"></i></a>
+        </div>
       </div>
-    </div> -->
+      <input type="range" step="1" id="volumeSlider" class="custom-range" min="0" max="100" onchange="updateVolume(this.value)">
+    </div>
 
 
     <!-- Insert this line above script imports  -->

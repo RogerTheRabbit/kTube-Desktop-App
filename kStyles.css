@@ -38,6 +38,7 @@
     display: flex;
     align-items: center;
     padding: 0.5em 0.5em 0.5em 0.5em;
+    white-space: normal;
 }
 
 .queryResult:hover {
@@ -50,10 +51,10 @@
 } */
 
 .queryResult img {
-    width: 120px!important;
+    width: 120px!important; 
     height: 90px!important;
     margin: 1rem;
-    border-radius: 10px
+    border-radius: 10px;
 }
 
 .nav {
@@ -81,9 +82,14 @@
     background-size: 100% 100%;
     min-width: 100px;
     min-height: 100px;
-    max-width: 6%;
-    max-height: 6%;
-    
+    max-width: 50px;
+    max-height: 50px;
+}
+
+#test {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
 
 
