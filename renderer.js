@@ -70,27 +70,31 @@ document.getElementById("search").focusin = function(event) {
     document.getElementById("queryResultContainer").hidden = false;
 }
 
+function updateCloud(id, thumbnail) {
+    console.log("UPDATING CLOUDDD");
+    syncClient.list('MyList')
+    .then(function(list) {
+        list.push({
+            id: id,
+            thumbnail: thumbnail
+        }).then(function(item) {
+            console.log('Added: ', item.index);
+        }).catch(function(err) {
+            console.error(err);
+        });
+    })
+    .catch(function(error) {
+        console.log('Unexpected error', error);
+    });
+}
+
+
 function changeVideoWithThumb(id, thumbnail) {
     changeVideoWithId(id);
     addHist(id);
     document.getElementById("thumbnail").src = thumbnail;
     // resetSearch()
     hide();
-
-    syncClient.list('MyList')
-        .then(function(list) {
-            list.push({
-                id: id,
-                thumbnail: thumbnail
-            }).then(function(item) {
-                console.log('Added: ', item.index);
-            }).catch(function(err) {
-                console.error(err);
-            });
-      })
-      .catch(function(error) {
-        console.log('Unexpected error', error);
-      });
 }
 
 function changeVideoWithId(id) {
@@ -124,7 +128,7 @@ function search() {
                 title = title.substring(0,42) + "...";
             (document.getElementById("queryResultContainer")).innerHTML += 
                 `
-                <div class="queryResult" onclick="changeVideoWithThumb('${data.items[x].id.videoId}', '${data.items[x].snippet.thumbnails.default.url}')">
+                <div class="queryResult" onclick="updateCloud('${data.items[x].id.videoId}', '${data.items[x].snippet.thumbnails.default.url}')">
                     <img src="${data.items[x].snippet.thumbnails.default.url}" alt="">
                     <div class="queryResultText">
                         <h4>${title}</h4>
@@ -209,41 +213,45 @@ ipc.on('MediaPreviousTrack', function(event, response) {
 
 
 
+var syncClient;
+$.ajax({
+    async: false,
+    url: "https://bubbles-kangaroo-6898.twil.io/sync-token",
+    success: function(data) {
+        var token = data.token;
+        syncClient = new Twilio.Sync.Client(token, { 
+            // logLevel: 'debug', 
+            id: 'MyId3'
+        });
+    }
+})
 
-$.getJSON("https://bubbles-kangaroo-6898.twil.io/sync-token", function(data) {
+syncClient.list('MyList')
+    .then(function(list) {
 
-    var token = data.token;
-    var syncClient = new Twilio.Sync.Client(token, { 
-        // logLevel: 'debug', 
-        id: 'MyId3'
-    });
+        // list.push({
+        //     video: '{VIDEO_ID}',
+        //     thumb: '{THUMBNAIL.PNG}'
+        // }).then(function(item) {
+        //     console.log('Added: ', item.index);
+        // }).catch(function(err) {
+        //     console.error(err);
+        // });
 
-    syncClient.list('MyList')
-        .then(function(list) {
+        // list.removeList();
 
-            list.push({
-                video: '{VIDEO_ID}',
-                thumb: '{THUMBNAIL.PNG}'
-            }).then(function(item) {
-                console.log('Added: ', item.index);
-            }).catch(function(err) {
-                console.error(err);
-            });
-
-            console.log('Successfully opened a List. SID: ' + list.sid);
-            list.on('itemAdded', function(event) {
-                console.log('Received itemAdded event: ', event);
-            });
+        console.log('Successfully opened a List. SID: ' + list.sid);
+        list.on('itemAdded', function(event) {
+            console.log('Received itemAdded event: ', event);
+            changeVideoWithThumb(event.item.data.value.id, event.item.data.value.thumbnail)
+        });
 
 
-            list.getItems().then(function(page) {
-                console.log('Items in list', page.items);
-            });
+        list.getItems().then(function(page) {
+            console.log('Items in list', page.items);
+        });
 
-      })
-      .catch(function(error) {
-        console.log('Unexpected error', error);
-      });
+    })
+    .catch(function(error) {
+    console.log('Unexpected error', error);
 });
-
-
