@@ -76,6 +76,21 @@ function changeVideoWithThumb(id, thumbnail) {
     document.getElementById("thumbnail").src = thumbnail;
     // resetSearch()
     hide();
+
+    syncClient.list('MyList')
+        .then(function(list) {
+            list.push({
+                id: id,
+                thumbnail: thumbnail
+            }).then(function(item) {
+                console.log('Added: ', item.index);
+            }).catch(function(err) {
+                console.error(err);
+            });
+      })
+      .catch(function(error) {
+        console.log('Unexpected error', error);
+      });
 }
 
 function changeVideoWithId(id) {
@@ -150,7 +165,7 @@ function updateVolume(newVolume) {
 }
 
 var key;
-fetch('key.txt')
+fetch('key_YouTube.txt')
     .then(response => response.text())
     .then(text => {key = text;});
 
@@ -190,3 +205,45 @@ ipc.on('MediaNextTrack', function(event, response) {
 ipc.on('MediaPreviousTrack', function(event, response) {
     playPrevious();
 })
+
+
+
+
+
+$.getJSON("https://bubbles-kangaroo-6898.twil.io/sync-token", function(data) {
+
+    var token = data.token;
+    var syncClient = new Twilio.Sync.Client(token, { 
+        // logLevel: 'debug', 
+        id: 'MyId3'
+    });
+
+    syncClient.list('MyList')
+        .then(function(list) {
+
+            list.push({
+                video: '{VIDEO_ID}',
+                thumb: '{THUMBNAIL.PNG}'
+            }).then(function(item) {
+                console.log('Added: ', item.index);
+            }).catch(function(err) {
+                console.error(err);
+            });
+
+            console.log('Successfully opened a List. SID: ' + list.sid);
+            list.on('itemAdded', function(event) {
+                console.log('Received itemAdded event: ', event);
+            });
+
+
+            list.getItems().then(function(page) {
+                console.log('Items in list', page.items);
+            });
+
+      })
+      .catch(function(error) {
+        console.log('Unexpected error', error);
+      });
+});
+
+
