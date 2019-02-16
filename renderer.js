@@ -8,6 +8,25 @@ var histPos = 0;
 const MAXWATCHHIST = 20;
 const MAXRESULTS = 10;
 const SONG = 1;
+const STOP = 0;
+const PLAY = 1;
+const PAUSE = 2;
+const NEXT = 3;
+const PREVIOUS = 4;
+
+// Initalize client
+var syncClient;
+$.ajax({
+    async: false,
+    url: "https://bubbles-kangaroo-6898.twil.io/sync-token",
+    success: function(data) {
+        var token = data.token;
+        syncClient = new Twilio.Sync.Client(token, { 
+            // logLevel: 'debug', 
+            id: 'MyId3'
+        });
+    }
+})
 
 tag.src = "https://www.youtube.com/iframe_api";
 var firstScriptTag = document.getElementsByTagName('script')[0];
@@ -48,7 +67,6 @@ function onError(event) {
 // 4. The API will call this function when the video player is ready.
 function onPlayerReady(event) {
     document.getElementById("volumeSlider").value = player.getVolume();
-    player.playVideo();
 }
 
 
@@ -74,17 +92,17 @@ document.getElementById("search").focusin = function(event) {
 
 function updateCloud(id, thumbnail) {
     console.log("UPDATING CLOUDDD");
-    syncClient.list('MyList')
-    .then(function(list) {
-        list.push({
-            type: SONG,
-            id: id,
-            thumbnail: thumbnail
-        }).then(function(item) {
-            console.log('Added: ', item.index);
-        }).catch(function(err) {
-            console.error(err);
-        });
+    syncClient.list('queue')
+        .then(function(list) {
+            list.push({
+                type: SONG,
+                id: id,
+                thumbnail: thumbnail
+            }).then(function(item) {
+                console.log('Added: ', item.index);
+            }).catch(function(err) {
+                console.error("updateCloud(): Error could not update list", err);
+            });
     })
     .catch(function(error) {
         console.log('Unexpected error', error);
@@ -129,27 +147,6 @@ function search() {
     })
 }
 
-function playNext() {
-    console.log("playNext() not currently working atm")
-//     if (histPos <= 0) {
-//         //changeVideoOnEnd({data: 0});
-//         console.log("No more vidoes in queue, add videos to watch more");
-//         histPos = 0;
-//     }
-//     else {
-//         histPos--;
-//         changeVideoWithId(watchHist[watchHist.length - 1 - histPos]);
-//     }
-}
-
-function playPrevious() {
-    console.log("playPrevious() not currently working atm")
-//     if (histPos < watchHist.length - 1) {
-//         histPos++;
-//         changeVideoWithId(watchHist[watchHist.length - 1 - histPos]);
-//     }
-}
-
 function updateVolume(newVolume) {
     player.setVolume(newVolume);
 }
@@ -176,22 +173,28 @@ fetch('key_YouTube.txt')
     // }
 // }
 
-function videoEnded(event) {
+function videoEnded(event={data: 0}) {
     console.log(event);
     if(event.data == 0) {
         console.log("VIDEO ENDEDEDEDEDED");
-        console.log(watchHist[histPos]);
         if (histPos > 0)
             changeVideo(watchHist[histPos].id, watchHist[histPos].thumbnail);
         else
             console.log("Video Ended but no more videos in queue");
     }
-    // syncClient.map('clientState')
-    //     .then(function(state) {
-    //         state.update('pos', state.get('pos') + 1);
-    //     }).catch(function(error) {
-    //         console.log(error);
-    //     })
+    // else{
+    //     console.log("videoEnded() called but event.data did not say video ended");
+    // }
+}
+
+function playPrevious(event) {
+    console.log("PLAYING PREVIOUS");
+    if (histPos >= watchHist.length) {
+        histPos++;
+        changeVideo(watchHist[histPos].id, watchHist[histPos].thumbnail);
+    }
+    else
+        console.log("Video Ended but no more videos in queue");
 }
 
 function changeVideo(id, thumbnail) {
@@ -202,13 +205,13 @@ function changeVideo(id, thumbnail) {
 var ipc = require('electron').ipcRenderer
 ipc.on('MediaPlayPause', function(event, response) {
     if (player.getPlayerState() != YT.PlayerState.PLAYING) 
-        player.playVideo();
+        playVideo();
     else
-        player.pauseVideo();
+        pauseVideo();
 })
 
 ipc.on('MediaStop', function(event, response) {
-    player.stopVideo();
+    stopVideo();
 })
 
 ipc.on('MediaNextTrack', function(event, response) {
@@ -219,23 +222,104 @@ ipc.on('MediaPreviousTrack', function(event, response) {
     playPrevious();
 })
 
+function playVideo() {
+    console.log("playVideo() called!");
+    syncClient.map('clientState')
+        .then(function(state) {
+            state.update('playerState', {'STATE': PLAY});
+        }).catch(function(error) {
+            console.log("playerState not preiviously set: setting to PLAY");
+            state.set('playerState', {'STATE': PLAY});
+        })
+}
+
+function pauseVideo() {
+    console.log("pauseVideo() called!");
+    syncClient.map('clientState')
+        .then(function(state) {
+            state.update('playerState', {'STATE': PAUSE});
+        }).catch(function(error) {
+            console.log("playerState not preiviously set: setting to PAUSE");
+            state.set('playerState', {'STATE': PAUSE});
+        })
+}
+
+function stopVideo() {
+    console.log("stopVideo() called!");
+    syncClient.map('clientState')
+        .then(function(state) {
+            state.update('playerState', {'STATE': STOP});
+        }).catch(function(error) {
+            console.log("playerState not preiviously set: setting to STOP");
+            state.set('playerState', {'STATE': STOP});
+        })
+}
+
+function playNext() {
+    console.log("playNext() called!");
+    syncClient.map('clientState')
+        .then(function(state) {
+            state.update('playerState', {'STATE': NEXT});
+        }).catch(function(error) {
+            console.log("playerState not preiviously set: setting to NEXT");
+            state.set('playerState', {'STATE': NEXT});
+        })
+}
+
+function playPrevious() {
+    console.log("playPrevious() called!");
+    syncClient.map('clientState')
+        .then(function(state) {
+            state.update('playerState', {'STATE': PREVIOUS});
+        }).catch(function(error) {
+            console.log("playerState not preiviously set: setting to PREVIOUS");
+            state.set('playerState', {'STATE': PREVIOUS});
+        })
+}
 
 
-// Initalize client
-var syncClient;
-$.ajax({
-    async: false,
-    url: "https://bubbles-kangaroo-6898.twil.io/sync-token",
-    success: function(data) {
-        var token = data.token;
-        syncClient = new Twilio.Sync.Client(token, { 
-            // logLevel: 'debug', 
-            id: 'MyId3'
-        });
+function handleMapUpdate(item) {
+    var key = item.item.descriptor.key;
+    var data = item.item.descriptor.data
+    if(key == 'playerState') {
+        if(data.STATE == PLAY) {
+            player.playVideo();
+        }
+        else if(data.STATE == PAUSE) {
+            player.pauseVideo();
+        }
+        else if(data.STATE == STOP) {
+            player.stopVideo();
+        }
+        else if(data.STATE == NEXT) {
+            // Play the next dang video
+            console.log("Playing next video is not an avaliable feature yet");
+            videoEnded();
+        }
+        else if(data.STATE == PREVIOUS) {
+            //Play the previous video
+            console.log("Playing previous video is not an avaliable feature yet");
+            playPrevious();
+        }
     }
-})
+}
 
-syncClient.list('MyList')
+syncClient.map('clientState')
+        .then(function(state) {
+            state.on('itemUpdated', function(item) {
+                console.log(item);
+                handleMapUpdate(item);
+            })
+            state.on('itemAdded', function(item) {
+                console.log(item);
+                handleMapUpdate(item);
+            })
+        }).catch(function(error) {
+            console.log("playerState not preiviously set in subscription: setting to PLAY");
+            state.set('playerState', {'STATE': PLAY});
+        })
+
+syncClient.list('queue')
     .then(function(list) {
 
         // list.push({
@@ -275,3 +359,10 @@ syncClient.list('MyList')
     .catch(function(error) {
     console.log('Unexpected error', error);
 });
+
+syncClient.map('clientState').then(function(map) {
+    map.getItems().then(function(page) {
+        console.log('clientState map: ', page.items);
+    });
+    // map.removeMap();
+  });
