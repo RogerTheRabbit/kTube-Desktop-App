@@ -1,11 +1,13 @@
 // 2. This code loads the IFrame Player API code asynchronously.
 var tag = document.createElement('script');
 var player;
-var curId = 'J_CFBjAyPWE'; //'ypsQuQnoZLY';
-var watchHist = [curId];
-var histPos = 0; //Pos from the right
+// var curId = 'J_CFBjAyPWE'; //'ypsQuQnoZLY';
+var watchHist = [{id:'J_CFBjAyPWE', thumbnail:''}];
+var histPos = 0;
+// var histPos = 0; //Pos from the right
 const MAXWATCHHIST = 20;
 const MAXRESULTS = 10;
+const SONG = 1;
 
 tag.src = "https://www.youtube.com/iframe_api";
 var firstScriptTag = document.getElementsByTagName('script')[0];
@@ -15,10 +17,10 @@ firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 //    after the API code downloads.
 function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
-        videoId: curId,
+        videoId: 'J_CFBjAyPWE',
         events: {
         'onReady': onPlayerReady,
-        'onStateChange': changeVideoOnEnd, //onPlayerStateChange
+        'onStateChange': videoEnded, //onPlayerStateChange
         'onError': onError
         }
     });
@@ -33,14 +35,14 @@ function onError(event) {
 
     console.log(event);
 
-    if (event.data==150 || event.data == 101) {
-        console.log("Failed to load video: Video not embeddable...picking next related song");
-        changeVideoOnEnd({data:0});
-    }
-    else {
-        console.log("Failed to laod video: see onError(event) in renderer.js for more details.");
-        console.log(event.data);
-    }
+    // if (event.data==150 || event.data == 101) {
+    //     console.log("Failed to load video: Video not embeddable...picking next related song");
+    //     changeVideoOnEnd({data:0});
+    // }
+    // else {
+    //     console.log("Failed to laod video: see onError(event) in renderer.js for more details.");
+    //     console.log(event.data);
+    // }
 }
 
 // 4. The API will call this function when the video player is ready.
@@ -57,12 +59,12 @@ document.getElementById("search").onkeydown = function(event) {
 }
 
 async function hide() {
-    setInterval(function(){document.getElementById("queryResultContainer").hidden = true;}, 1);
+    setInterval(function(){document.getElementById("queryResultContainer").hidden = true;}, 500);
 }
 
 document.getElementById("search").focusout = function(event) {
     console.log("FOCUSED OUT");
-    // hide();
+    hide();
 }
 
 document.getElementById("search").focusin = function(event) {
@@ -75,6 +77,7 @@ function updateCloud(id, thumbnail) {
     syncClient.list('MyList')
     .then(function(list) {
         list.push({
+            type: SONG,
             id: id,
             thumbnail: thumbnail
         }).then(function(item) {
@@ -86,20 +89,6 @@ function updateCloud(id, thumbnail) {
     .catch(function(error) {
         console.log('Unexpected error', error);
     });
-}
-
-
-function changeVideoWithThumb(id, thumbnail) {
-    changeVideoWithId(id);
-    addHist(id);
-    document.getElementById("thumbnail").src = thumbnail;
-    // resetSearch()
-    hide();
-}
-
-function changeVideoWithId(id) {
-    player.loadVideoById(player.videoId = id);
-    curId = id;
 }
 
 function resetSearch(resetQ=true) {
@@ -140,28 +129,25 @@ function search() {
     })
 }
 
-function addHist(id) {
-    if (watchHist.length >= MAXWATCHHIST)
-        watchHist.shift();
-    watchHist.push(id);
-}
-
 function playNext() {
-    if (histPos <= 0) {
-        changeVideoOnEnd({data: 0});
-        histPos = 0;
-    }
-    else {
-        histPos--;
-        changeVideoWithId(watchHist[watchHist.length - 1 - histPos]);
-    }
+    console.log("playNext() not currently working atm")
+//     if (histPos <= 0) {
+//         //changeVideoOnEnd({data: 0});
+//         console.log("No more vidoes in queue, add videos to watch more");
+//         histPos = 0;
+//     }
+//     else {
+//         histPos--;
+//         changeVideoWithId(watchHist[watchHist.length - 1 - histPos]);
+//     }
 }
 
 function playPrevious() {
-    if (histPos < watchHist.length - 1) {
-        histPos++;
-        changeVideoWithId(watchHist[watchHist.length - 1 - histPos]);
-    }
+    console.log("playPrevious() not currently working atm")
+//     if (histPos < watchHist.length - 1) {
+//         histPos++;
+//         changeVideoWithId(watchHist[watchHist.length - 1 - histPos]);
+//     }
 }
 
 function updateVolume(newVolume) {
@@ -174,20 +160,43 @@ fetch('key_YouTube.txt')
     .then(text => {key = text;});
 
 
-function changeVideoOnEnd(event) {
-    if (event.data === 0) {
-        console.log("VIDEO ENDED");
-        // url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&videoSyndicated=true&maxResults=' + MAXRESULTS + '&relatedToVideoId=' + curId + '&type=video&videoEmbeddable=true&fields=items(id%2FvideoId%2Csnippet(channelTitle%2Cthumbnails%2Fdefault%2Furl%2Ctitle))&key=' + key
-        // url = "https://www.googleapis.com/youtube/v3/search?part=snippet&eventType=completed&maxResults=" + MAXRESULTS + "&relatedToVideoId=" + curId + "&type=video&videoEmbeddable=true&videoSyndicated=true&fields=items(id%2FvideoId%2Csnippet(channelTitle%2Cthumbnails%2Fdefault%2Furl%2Ctitle))&key=" + key;
-        url = "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=" + MAXRESULTS +"&regionCode=us&relatedToVideoId=" + curId + "&type=video&videoEmbeddable=true&fields=items(id%2FvideoId%2Csnippet%2Fthumbnails%2Fdefault%2Furl)&key=" + key;
-        $.getJSON(url, function(data) {
-            var x = Math.floor(Math.random() * data.items.length);
-            curId = data.items[x].id.videoId;
-            player.loadVideoById(player.videoId = curId);
-            document.getElementById("thumbnail").src = data.items[x].snippet.thumbnails.default.url;
-            addHist(curId);
-        })
+// function changeVideoOnEnd(event) {
+    // if (event.data === 0) {
+    //     console.log("VIDEO ENDED");
+    //     // url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&videoSyndicated=true&maxResults=' + MAXRESULTS + '&relatedToVideoId=' + curId + '&type=video&videoEmbeddable=true&fields=items(id%2FvideoId%2Csnippet(channelTitle%2Cthumbnails%2Fdefault%2Furl%2Ctitle))&key=' + key
+    //     // url = "https://www.googleapis.com/youtube/v3/search?part=snippet&eventType=completed&maxResults=" + MAXRESULTS + "&relatedToVideoId=" + curId + "&type=video&videoEmbeddable=true&videoSyndicated=true&fields=items(id%2FvideoId%2Csnippet(channelTitle%2Cthumbnails%2Fdefault%2Furl%2Ctitle))&key=" + key;
+    //     url = "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=" + MAXRESULTS +"&regionCode=us&relatedToVideoId=" + curId + "&type=video&videoEmbeddable=true&fields=items(id%2FvideoId%2Csnippet%2Fthumbnails%2Fdefault%2Furl)&key=" + key;
+    //     $.getJSON(url, function(data) {
+    //         var x = Math.floor(Math.random() * data.items.length);
+    //         curId = data.items[x].id.videoId;
+    //         player.loadVideoById(player.videoId = curId);
+    //         document.getElementById("thumbnail").src = data.items[x].snippet.thumbnails.default.url;
+    //         addHist(curId);
+    //     })
+    // }
+// }
+
+function videoEnded(event) {
+    console.log(event);
+    if(event.data == 0) {
+        console.log("VIDEO ENDEDEDEDEDED");
+        console.log(watchHist[histPos]);
+        if (histPos > 0)
+            changeVideo(watchHist[histPos].id, watchHist[histPos].thumbnail);
+        else
+            console.log("Video Ended but no more videos in queue");
     }
+    // syncClient.map('clientState')
+    //     .then(function(state) {
+    //         state.update('pos', state.get('pos') + 1);
+    //     }).catch(function(error) {
+    //         console.log(error);
+    //     })
+}
+
+function changeVideo(id, thumbnail) {
+    player.loadVideoById(player.videoId = id);
+    document.getElementById("thumbnail").src = thumbnail;
 }
 
 var ipc = require('electron').ipcRenderer
@@ -212,7 +221,7 @@ ipc.on('MediaPreviousTrack', function(event, response) {
 
 
 
-
+// Initalize client
 var syncClient;
 $.ajax({
     async: false,
@@ -243,7 +252,18 @@ syncClient.list('MyList')
         console.log('Successfully opened a List. SID: ' + list.sid);
         list.on('itemAdded', function(event) {
             console.log('Received itemAdded event: ', event);
-            changeVideoWithThumb(event.item.data.value.id, event.item.data.value.thumbnail)
+            if (event.item.data.value.type == SONG) {
+                watchHist.push({id:event.item.data.value.id, thumbnail:event.item.data.value.thumbnail});
+                histPos++;
+            }
+                
+            list.getItems().then(function(items) {
+                if(items.length > MAXWATCHHIST) {
+                    list.remove(0).then(function() {
+                        console.log('deleted first item');
+                      });
+                }
+            })
         });
 
 
