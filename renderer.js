@@ -2,7 +2,7 @@
 var tag = document.createElement('script');
 var player;
 // var curId = 'J_CFBjAyPWE'; //'ypsQuQnoZLY';
-var watchHist = [{id:'J_CFBjAyPWE', thumbnail:''}];
+var watchHist = []; // {id:'Huggdy7ohb4', thumbnail:''}
 var histPos = 0;
 // var histPos = 0; //Pos from the right
 const MAXWATCHHIST = 20;
@@ -36,7 +36,7 @@ firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 //    after the API code downloads.
 function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
-        videoId: 'J_CFBjAyPWE',
+        // videoId: 'Huggdy7ohb4',
         events: {
         'onReady': onPlayerReady,
         'onStateChange': videoEnded, //onPlayerStateChange
@@ -71,24 +71,27 @@ function onPlayerReady(event) {
 
 
 document.getElementById("search").onkeydown = function(event) {
+    if(event.keyCode == 8) {
+        resetSearch(true);
+    }
     if(event.keyCode == 13) {
         search();
     }
 }
 
-async function hide() {
-    setInterval(function(){document.getElementById("queryResultContainer").hidden = true;}, 500);
-}
+// async function hide() {
+//     setInterval(function(){document.getElementById("queryResultContainer").hidden = true;}, 500);
+// }
 
-document.getElementById("search").focusout = function(event) {
-    console.log("FOCUSED OUT");
-    hide();
-}
+// document.getElementById("search").focusout = function(event) {
+//     console.log("FOCUSED OUT");
+//     hide();
+// }
 
-document.getElementById("search").focusin = function(event) {
-    console.log("FOCUSED IN");
-    document.getElementById("queryResultContainer").hidden = false;
-}
+// document.getElementById("search").focusin = function(event) {
+//     console.log("FOCUSED IN");
+//     document.getElementById("queryResultContainer").hidden = false;
+// }
 
 function updateCloud(id, thumbnail) {
     console.log("UPDATING CLOUDDD");
@@ -156,29 +159,14 @@ fetch('key_YouTube.txt')
     .then(response => response.text())
     .then(text => {key = text;});
 
-
-// function changeVideoOnEnd(event) {
-    // if (event.data === 0) {
-    //     console.log("VIDEO ENDED");
-    //     // url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&videoSyndicated=true&maxResults=' + MAXRESULTS + '&relatedToVideoId=' + curId + '&type=video&videoEmbeddable=true&fields=items(id%2FvideoId%2Csnippet(channelTitle%2Cthumbnails%2Fdefault%2Furl%2Ctitle))&key=' + key
-    //     // url = "https://www.googleapis.com/youtube/v3/search?part=snippet&eventType=completed&maxResults=" + MAXRESULTS + "&relatedToVideoId=" + curId + "&type=video&videoEmbeddable=true&videoSyndicated=true&fields=items(id%2FvideoId%2Csnippet(channelTitle%2Cthumbnails%2Fdefault%2Furl%2Ctitle))&key=" + key;
-    //     url = "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=" + MAXRESULTS +"&regionCode=us&relatedToVideoId=" + curId + "&type=video&videoEmbeddable=true&fields=items(id%2FvideoId%2Csnippet%2Fthumbnails%2Fdefault%2Furl)&key=" + key;
-    //     $.getJSON(url, function(data) {
-    //         var x = Math.floor(Math.random() * data.items.length);
-    //         curId = data.items[x].id.videoId;
-    //         player.loadVideoById(player.videoId = curId);
-    //         document.getElementById("thumbnail").src = data.items[x].snippet.thumbnails.default.url;
-    //         addHist(curId);
-    //     })
-    // }
-// }
-
 function videoEnded(event={data: 0}) {
     console.log(event);
     if(event.data == 0) {
         console.log("VIDEO ENDEDEDEDEDED");
-        if (histPos > 0)
-            changeVideo(watchHist[histPos].id, watchHist[histPos].thumbnail);
+        if (histPos > 0) {
+            histPos--;
+            changeVideo(watchHist[watchHist.length - histPos - 1].id, watchHist[watchHist.length - histPos - 1].thumbnail);
+        }
         else
             console.log("Video Ended but no more videos in queue");
     }
@@ -187,14 +175,14 @@ function videoEnded(event={data: 0}) {
     // }
 }
 
-function playPrevious(event) {
-    console.log("PLAYING PREVIOUS");
-    if (histPos >= watchHist.length) {
+function playPreviousSong(event) {
+    console.log("PLAYING PREVIOUS SONG", event);
+    if (histPos < watchHist.length - 1) {
         histPos++;
-        changeVideo(watchHist[histPos].id, watchHist[histPos].thumbnail);
+        changeVideo(watchHist[watchHist.length - histPos - 1].id, watchHist[watchHist.length - histPos - 1].thumbnail);
     }
     else
-        console.log("Video Ended but no more videos in queue");
+        console.log("No previous videos in queue");
 }
 
 function changeVideo(id, thumbnail) {
@@ -283,7 +271,12 @@ function handleMapUpdate(item) {
     var data = item.item.descriptor.data
     if(key == 'playerState') {
         if(data.STATE == PLAY) {
-            player.playVideo();
+            if(player.id == "" && watchHist.length > 0) {
+                changeVideo(watchHist[watchHist.length - histPos - 1].id, watchHist[watchHist.length - histPos - 1].thumbnail);
+            }
+            else if (watchHist.length > 0) {
+                player.playVideo();
+            }
         }
         else if(data.STATE == PAUSE) {
             player.pauseVideo();
@@ -292,14 +285,10 @@ function handleMapUpdate(item) {
             player.stopVideo();
         }
         else if(data.STATE == NEXT) {
-            // Play the next dang video
-            console.log("Playing next video is not an avaliable feature yet");
             videoEnded();
         }
         else if(data.STATE == PREVIOUS) {
-            //Play the previous video
-            console.log("Playing previous video is not an avaliable feature yet");
-            playPrevious();
+            playPreviousSong();
         }
     }
 }
