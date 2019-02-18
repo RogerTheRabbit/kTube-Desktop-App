@@ -188,7 +188,32 @@ function playPreviousSong(event) {
 function changeVideo(id, thumbnail) {
     player.loadVideoById(player.videoId = id);
     document.getElementById("thumbnail").src = thumbnail;
+    updateQueue();
 }
+
+// This is a dumb way of doing this and should be made more efficient 
+// But I needed something quick for testing.
+function updateQueue() {
+    document.getElementById("queueContainer").innerHTML = "";
+    var data;
+    var title = "DEFINITLY THE REAL TITLE OF THIS VIDEO";
+    var channelTitle = "THE BEST CHANNEL TITLE EVER"
+    for(var x = 0; x < watchHist.length; x++) {
+        (x == watchHist.length - histPos - 1)
+        document.getElementById("queueContainer").innerHTML +=(
+            `
+            <div class="queryResult" id="${(x == watchHist.length - histPos - 1) ? "current" : ""}">
+                <img src="${watchHist[x].thumbnail}" alt="THUMBNAIL NOT AVALIABLE">
+                <div class="queryResultText">
+                    <h4>${title}</h4>
+                    <h6>${channelTitle} - 5:06</h6>
+                </div>
+            </div>
+            `
+        );
+    }
+}
+
 
 var ipc = require('electron').ipcRenderer
 ipc.on('MediaPlayPause', function(event, response) {
