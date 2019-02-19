@@ -296,7 +296,9 @@ function handleMapUpdate(item) {
     var data = item.item.descriptor.data
     if(key == 'playerState') {
         if(data.STATE == PLAY) {
-            if(player.id == "" && watchHist.length > 0) {
+            console.log(player.videoId);
+            if((player.videoId == null || player.getPlayerState() == YT.PlayerState.ENDED) && watchHist.length > 0) {
+                histPos--;
                 changeVideo(watchHist[watchHist.length - histPos - 1].id, watchHist[watchHist.length - histPos - 1].thumbnail);
             }
             else if (watchHist.length > 0) {
@@ -336,15 +338,6 @@ syncClient.map('clientState')
 syncClient.list('queue')
     .then(function(list) {
 
-        // list.push({
-        //     video: '{VIDEO_ID}',
-        //     thumb: '{THUMBNAIL.PNG}'
-        // }).then(function(item) {
-        //     console.log('Added: ', item.index);
-        // }).catch(function(err) {
-        //     console.error(err);
-        // });
-
         // list.removeList();
 
         console.log('Successfully opened a List. SID: ' + list.sid);
@@ -353,6 +346,7 @@ syncClient.list('queue')
             if (event.item.data.value.type == SONG) {
                 watchHist.push({id:event.item.data.value.id, thumbnail:event.item.data.value.thumbnail});
                 histPos++;
+                updateQueue();
             }
                 
             list.getItems().then(function(items) {
@@ -380,3 +374,16 @@ syncClient.map('clientState').then(function(map) {
     });
     // map.removeMap();
   });
+
+// Used for clearing queues
+function resetCloud() {
+    syncClient.map('clientState')
+        .then(function(map) {
+            map.removeMap();
+        });
+
+    syncClient.list('queue')
+        .then(function(list) {
+            list.removeList();
+        });
+}

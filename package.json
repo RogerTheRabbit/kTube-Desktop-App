@@ -1,6 +1,6 @@
 {
   "name": "youtube_desktop_app",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A YouTube desktop app for use of OS specific media  controls.",
   "main": "main.js",
   "scripts": {
