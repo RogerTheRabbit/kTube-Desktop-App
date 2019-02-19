@@ -67,6 +67,20 @@
     flex-direction: column;
 }
 
+#queueContainer {
+    background-color: rgba(96, 125, 139, 0.3);
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    margin: 5 auto;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+#current {
+    background-color: rgba(0, 188, 212, 0.7);
+}
 
 #controls {
     position: absolute;
@@ -86,17 +100,15 @@
     max-height: 50px;
 }
 
-#test {
+#playerControls {
     display: flex;
     flex-direction: row;
     align-items: center;
 }
 
-
 .btn-rounded {
     border-radius: 10rem;
 }
-
 
 ::-webkit-scrollbar{
     width: 0px;
