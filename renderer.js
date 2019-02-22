@@ -73,6 +73,7 @@ function onPlayerReady(event) {
 document.getElementById("search").onkeydown = function(event) {
     if(event.keyCode == 8) {
         resetSearch(true);
+        lastSearch="";
     }
     if(event.keyCode == 13) {
         search();

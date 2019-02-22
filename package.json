@@ -1,5 +1,5 @@
 {
-  "name": "youtube_desktop_app",
+  "name": "kTube",
   "version": "0.1.0",
   "description": "A YouTube desktop app for use of OS specific media  controls.",
   "main": "main.js",

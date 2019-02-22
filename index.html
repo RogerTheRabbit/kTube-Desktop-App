@@ -19,7 +19,7 @@
 
     <div class="container color-block rare-wind-gradient z-depth-1">
       <!-- hidden="true" -->
-      <div id="player" class="z-depth-2" ></div>
+      <div id="player" hidden="true"></div>
       <!--Nothing to see here-->
     </div>
 
@@ -36,7 +36,7 @@
 
     <div id="controls">
       <div id="playerControls">
-        <img src="./resources/kTube_Icon.png" alt="" id="thumbnail">
+        <img src="./res/kTube_Icon.png" alt="" id="thumbnail">
         <div class="mediaControls">
           <a class="btn-floating btn-lg purple-gradient btn-rounded" onclick="playVideo()"><i class="fas fa-play"></i></a>
           <a class="btn-floating btn-lg purple-gradient btn-rounded" onclick="pauseVideo()"><i class="fas fa-pause"></i></a>
@@ -47,7 +47,6 @@
       </div>
       <input type="range" step="1" id="volumeSlider" class="custom-range" min="0" max="100" onchange="updateVolume(this.value)">
     </div>
-
 
     <!-- Insert this line above script imports  -->
     <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
