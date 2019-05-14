@@ -18,6 +18,7 @@ const NEW_USER = 102;
 const ERROR = 103;
 const INVALID_CREDS = 104;
 const ADD_SONG = 105;
+const SYNC = 106;
 const MAXRESULTS = 10;
 const SONG = 1;
 const STOP = 0;
@@ -122,9 +123,17 @@ socket.on(ERROR, function(reason) {
   }
 });
 
+socket.on(SYNC, function(room) {
+  console.log("RECIEVED SYNC");
+  console.log(room.queue);
+  watchHist = watchHist.concat(room.queue);
+  console.log(watchHist);
+  histPos += room.queue.length;
+  updateQueue();
+});
+
 // Tell server what song to add to queue
 function addSong(id, thumbnail) {
-  console.log("Client adding song.");
   socket.emit(ADD_SONG, { id: id, thumbnail: thumbnail });
 }
 

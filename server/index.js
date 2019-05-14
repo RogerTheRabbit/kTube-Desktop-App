@@ -9,6 +9,7 @@ const NEW_USER = 102;
 const ERROR = 103;
 const INVALID_CREDS = 104;
 const ADD_SONG = 105;
+const SYNC = 106;
 var rooms = {};
 
 // App setup
@@ -28,28 +29,33 @@ io.on("connection", function(socket) {
     if (data.name in rooms && rooms[data.name].password == data.password) {
       socket.join(data.name);
       room = data.name;
-      io.to(data.name).emit(STATE_CHANGE, {
+      io.to(room).emit(STATE_CHANGE, {
         type: NEW_USER,
         msg: "${socket.id} has joined the room!"
       });
+      io.to(room).emit(SYNC, rooms[room].state);
     } else {
       socket.emit(ERROR, { type: INVALID_CREDS });
     }
+    socket.on(ADD_SONG, function(song) {
+      io.to(room).emit(ADD_SONG, song);
+      rooms[room].state.queue.push(song);
+    });
   });
 
   socket.on(CREATE_ROOM, function(room) {
-    rooms[room.name] = {
-      password: room.password,
-      state: {
-        queue: [],
-        cur_playing: ""
-      }
-    };
-  });
-
-  socket.on(ADD_SONG, function(song) {
-    console.log("Add song recieved:", song);
-    io.to(room).emit(ADD_SONG, song);
+    if (!(room.name in rooms)) {
+      rooms[room.name] = {
+        password: room.password,
+        users: 1,
+        state: {
+          queue: [],
+          cur_playing: "" // TODO: Convert to using usernames instead of just a count of users.
+        }
+      };
+    } else {
+      // TODO: Handel room already existing or make it so that rooms can have the same name.
+    }
   });
 
   // Log client disconnecting
@@ -60,5 +66,10 @@ io.on("connection", function(socket) {
       "' for reason:",
       reason
     );
+    rooms[room].users -= 1;
+    if (rooms[room].users < 1) {
+      delete rooms[room];
+      console.log(`[EMPTY ROOM] \"${room}\" has been deleted.`);
+    }
   });
 });
