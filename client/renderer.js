@@ -10,7 +10,14 @@ var player;
 var watchHist = []; // {id:'Huggdy7ohb4', thumbnail:''}
 var histPos = 0;
 // var histPos = 0; //Pos from the right
-const MAXWATCHHIST = 20;
+
+const CREATE_ROOM = 000;
+const JOIN_ROOM = 100;
+const STATE_CHANGE = 101;
+const NEW_USER = 102;
+const ERROR = 103;
+const INVALID_CREDS = 104;
+const ADD_SONG = 105;
 const MAXRESULTS = 10;
 const SONG = 1;
 const STOP = 0;
@@ -19,7 +26,7 @@ const PAUSE = 2;
 const NEXT = 3;
 const PREVIOUS = 4;
 
-// Initalize client
+// Initialize client
 var syncClient;
 $.ajax({
   async: false,
@@ -84,28 +91,52 @@ document.getElementById("search").onkeydown = function(event) {
   }
 };
 
-function updateCloud(id, thumbnail) {
-  console.log("UPDATING CLOUDDD");
-  syncClient
-    .list("queue")
-    .then(function(list) {
-      list
-        .push({
-          type: SONG,
-          id: id,
-          thumbnail: thumbnail
-        })
-        .then(function(item) {
-          console.log("Added: ", item.index);
-        })
-        .catch(function(err) {
-          console.error("updateCloud(): Error could not update list", err);
-        });
-    })
-    .catch(function(error) {
-      console.log("Unexpected error", error);
-    });
+function createRoom(name, password) {
+  socket.emit(CREATE_ROOM, {
+    name: name,
+    password: password
+  });
 }
+
+function joinRoom(name, password) {
+  socket.emit(JOIN_ROOM, {
+    name: name,
+    password: password
+  });
+}
+
+createRoom("This is a room name dab dab dab", "Password123");
+joinRoom("This is a room name dab dab dab", "Password123");
+
+// Handel any errors that occur.
+socket.on(ERROR, function(reason) {
+  switch (reason.type) {
+    case INVALID_CREDS:
+      // TODO Handle invalid creds.
+      console.log(
+        "Either invalid room name or invalid password when connecting to room."
+      );
+      break;
+    default:
+      console.log("Unknown error:", reason);
+  }
+});
+
+// Tell server what song to add to queue
+function addSong(id, thumbnail) {
+  console.log("Client adding song.");
+  socket.emit(ADD_SONG, { id: id, thumbnail: thumbnail });
+}
+
+socket.on(ADD_SONG, function(data) {
+  console.log("Received ADD_SONG:", data);
+  watchHist.push({
+    id: data.id,
+    thumbnail: data.thumbnail
+  });
+  histPos++;
+  updateQueue();
+});
 
 function resetSearch(resetQ = true) {
   document.getElementById("queryResultContainer").innerHTML = "";
@@ -136,7 +167,7 @@ function search() {
       var title = data.items[x].snippet.title;
       if (title.length > 42) title = title.substring(0, 42) + "...";
       document.getElementById("queryResultContainer").innerHTML += `
-                <div class="queryResult" onclick="updateCloud('${
+                <div class="queryResult" onclick="addSong('${
                   data.items[x].id.videoId
                 }', '${data.items[x].snippet.thumbnails.default.url}')">
                     <img src="${
@@ -397,12 +428,4 @@ syncClient.map("clientState").then(function(map) {
 });
 
 // Used for clearing queues
-function resetCloud() {
-  syncClient.map("clientState").then(function(map) {
-    map.removeMap();
-  });
-
-  syncClient.list("queue").then(function(list) {
-    list.removeList();
-  });
-}
+function resetCloud() {}
