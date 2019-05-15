@@ -11,7 +11,7 @@ var watchHist = []; // {id:'Huggdy7ohb4', thumbnail:''}
 var histPos = 0;
 // var histPos = 0; //Pos from the right
 
-const CREATE_ROOM = 000;
+const CREATE_ROOM = 110;
 const JOIN_ROOM = 100;
 const STATE_CHANGE = 101;
 const NEW_USER = 102;
@@ -19,13 +19,15 @@ const ERROR = 103;
 const INVALID_CREDS = 104;
 const ADD_SONG = 105;
 const SYNC = 106;
+const VIDEO_ENDED = 107;
+const SUCCESS = 108;
 const MAXRESULTS = 10;
-const SONG = 1;
-const STOP = 0;
-const PLAY = 1;
-const PAUSE = 2;
-const NEXT = 3;
-const PREVIOUS = 4;
+const PLAY = 0;
+const PAUSE = 1;
+const STOP = 2;
+const PREVIOUS = 3;
+const NEXT = 4;
+const WAITING = 5;
 
 // Initialize client
 var syncClient;
@@ -99,10 +101,14 @@ function createRoom(name, password) {
   });
 }
 
-function joinRoom(name, password) {
+function joinRoom(name, password, username) {
   socket.emit(JOIN_ROOM, {
     name: name,
-    password: password
+    password: password,
+    username: username
+  });
+  socket.on(SUCCESS, function() {
+    // TODO: Handle successful joinRoom.
   });
 }
 
@@ -123,12 +129,12 @@ socket.on(ERROR, function(reason) {
   }
 });
 
-socket.on(SYNC, function(room) {
+socket.on(SYNC, function(state) {
   console.log("RECIEVED SYNC");
-  console.log(room.queue);
-  watchHist = watchHist.concat(room.queue);
-  console.log(watchHist);
-  histPos += room.queue.length;
+  // TODO: Should compare lists not just immediately add them.
+  watchHist = watchHist.concat(state.queue);
+  histPos = state.histPos;
+  // TODO: Set player to current song.
   updateQueue();
 });
 
@@ -139,12 +145,57 @@ function addSong(id, thumbnail) {
 
 socket.on(ADD_SONG, function(data) {
   console.log("Received ADD_SONG:", data);
+  if (player.videoId == null) {
+    changeVideo(data.id, data.thumbnail);
+  }
   watchHist.push({
     id: data.id,
     thumbnail: data.thumbnail
   });
   histPos++;
   updateQueue();
+});
+
+socket.on(PLAY, function() {
+  // if (
+  //   (player.videoId == null ||
+  //     player.getPlayerState() == YT.PlayerState.ENDED) &&
+  //   watchHist.length > 0
+  // ) {
+  //   histPos--;
+  //   changeVideo(
+  //     watchHist[watchHist.length - histPos - 1].id,
+  //     watchHist[watchHist.length - histPos - 1].thumbnail
+  //   );
+  // } else if (watchHist.length > 0) {
+  //   player.playVideo();
+  // }
+  console.log("Received PLAY: watchHist=", watchHist);
+  player.playVideo();
+});
+
+socket.on(PAUSE, function() {
+  console.log("Received PAUSE: watchHist=", watchHist);
+  player.pauseVideo();
+});
+
+socket.on(STOP, function() {
+  console.log("Received STOP: watchHist=", watchHist);
+  player.stopVideo();
+});
+
+socket.on(NEXT, function() {
+  histPos--;
+  console.log("Received NEXT: watchHist=", watchHist);
+  changeVideo(
+    watchHist[watchHist.length - histPos - 1].id,
+    watchHist[watchHist.length - histPos - 1].thumbnail
+  );
+});
+
+socket.on(PREVIOUS, function() {
+  playPreviousSong();
+  console.log("Received PREVIOUS: watchHist=", watchHist);
 });
 
 function resetSearch(resetQ = true) {
@@ -204,17 +255,25 @@ fetch("key_YouTube.txt")
   });
 
 function videoEnded(event = { data: 0 }) {
-  console.log(event);
+  console.log("videoEnded event=", event);
   if (event.data == 0) {
-    console.log("VIDEO ENDEDEDEDEDED");
-    if (histPos > 0) {
-      histPos--;
-      changeVideo(
-        watchHist[watchHist.length - histPos - 1].id,
-        watchHist[watchHist.length - histPos - 1].thumbnail
-      );
-    } else console.log("Video Ended but no more videos in queue");
+    socket.emit(VIDEO_ENDED);
   }
+  // if (event.data == 0) {
+  //   console.log("VIDEO ENDEDEDEDEDED");
+  //   if (histPos > 0) {
+  //     socket.emit(NEXT);
+  //   } else {
+  //     socket.emit(WAITING);
+  //   }
+  //   // if (histPos > 0) {
+  //   //   histPos--;
+  //   //   changeVideo(
+  //   //     watchHist[watchHist.length - histPos - 1].id,
+  //   //     watchHist[watchHist.length - histPos - 1].thumbnail
+  //   //   );
+  //   // } else console.log("Video Ended but no more videos in queue");
+  // }
   // else{
   //     console.log("videoEnded() called but event.data did not say video ended");
   // }
@@ -281,68 +340,83 @@ ipc.on("MediaPreviousTrack", function(event, response) {
 });
 
 function playVideo() {
-  console.log("playVideo() called!");
-  syncClient
-    .map("clientState")
-    .then(function(state) {
-      state.update("playerState", { STATE: PLAY });
-    })
-    .catch(function(error) {
-      console.log("playerState not preiviously set: setting to PLAY");
-      state.set("playerState", { STATE: PLAY });
-    });
+  // TODO: Make client not send PLAY command if next is not available.
+  //       Want to make sure server can handle invalid PLAY commands first.
+  socket.emit(PLAY);
+  // console.log("playVideo() called!");
+  // syncClient
+  //   .map("clientState")
+  //   .then(function(state) {
+  //     state.update("playerState", { STATE: PLAY });
+  //   })
+  //   .catch(function(error) {
+  //     console.log("playerState not preiviously set: setting to PLAY");
+  //     state.set("playerState", { STATE: PLAY });
+  //   });
 }
 
 function pauseVideo() {
+  // TODO: Make client not send PAUSE command if next is not available.
+  //       Want to make sure server can handle invalid PAUSE commands first.
   console.log("pauseVideo() called!");
-  syncClient
-    .map("clientState")
-    .then(function(state) {
-      state.update("playerState", { STATE: PAUSE });
-    })
-    .catch(function(error) {
-      console.log("playerState not preiviously set: setting to PAUSE");
-      state.set("playerState", { STATE: PAUSE });
-    });
+  socket.emit(PAUSE);
+  // syncClient
+  //   .map("clientState")
+  //   .then(function(state) {
+  //     state.update("playerState", { STATE: PAUSE });
+  //   })
+  //   .catch(function(error) {
+  //     console.log("playerState not preiviously set: setting to PAUSE");
+  //     state.set("playerState", { STATE: PAUSE });
+  //   });
 }
 
 function stopVideo() {
+  // TODO: Make client not send STOP command if next is not available.
+  //       Want to make sure server can handle invalid STOP commands first.
   console.log("stopVideo() called!");
-  syncClient
-    .map("clientState")
-    .then(function(state) {
-      state.update("playerState", { STATE: STOP });
-    })
-    .catch(function(error) {
-      console.log("playerState not preiviously set: setting to STOP");
-      state.set("playerState", { STATE: STOP });
-    });
+  socket.emit(STOP);
+  // syncClient
+  //   .map("clientState")
+  //   .then(function(state) {
+  //     state.update("playerState", { STATE: STOP });
+  //   })
+  //   .catch(function(error) {
+  //     console.log("playerState not preiviously set: setting to STOP");
+  //     state.set("playerState", { STATE: STOP });
+  //   });
 }
 
 function playNext() {
+  // TODO: Make client not send NEXT command if next is not available.
+  //       Want to make sure server can handle invalid NEXT commands first.
   console.log("playNext() called!");
-  syncClient
-    .map("clientState")
-    .then(function(state) {
-      state.update("playerState", { STATE: NEXT });
-    })
-    .catch(function(error) {
-      console.log("playerState not preiviously set: setting to NEXT");
-      state.set("playerState", { STATE: NEXT });
-    });
+  socket.emit(NEXT);
+  // syncClient
+  //   .map("clientState")
+  //   .then(function(state) {
+  //     state.update("playerState", { STATE: NEXT });
+  //   })
+  //   .catch(function(error) {
+  //     console.log("playerState not preiviously set: setting to NEXT");
+  //     state.set("playerState", { STATE: NEXT });
+  //   });
 }
 
 function playPrevious() {
+  // TODO: Make client not send PREVIOUS command if next is not available.
+  //       Want to make sure server can handle invalid PREVIOUS commands first.
   console.log("playPrevious() called!");
-  syncClient
-    .map("clientState")
-    .then(function(state) {
-      state.update("playerState", { STATE: PREVIOUS });
-    })
-    .catch(function(error) {
-      console.log("playerState not preiviously set: setting to PREVIOUS");
-      state.set("playerState", { STATE: PREVIOUS });
-    });
+  socket.emit(PREVIOUS);
+  // syncClient
+  //   .map("clientState")
+  //   .then(function(state) {
+  //     state.update("playerState", { STATE: PREVIOUS });
+  //   })
+  //   .catch(function(error) {
+  //     console.log("playerState not preiviously set: setting to PREVIOUS");
+  //     state.set("playerState", { STATE: PREVIOUS });
+  //   });
 }
 
 function handleMapUpdate(item) {
@@ -350,28 +424,28 @@ function handleMapUpdate(item) {
   var data = item.item.descriptor.data;
   if (key == "playerState") {
     if (data.STATE == PLAY) {
-      console.log(player.videoId);
-      if (
-        (player.videoId == null ||
-          player.getPlayerState() == YT.PlayerState.ENDED) &&
-        watchHist.length > 0
-      ) {
-        histPos--;
-        changeVideo(
-          watchHist[watchHist.length - histPos - 1].id,
-          watchHist[watchHist.length - histPos - 1].thumbnail
-        );
-      } else if (watchHist.length > 0) {
-        player.playVideo();
-      }
+      // console.log(player.videoId);
+      // if (
+      //   (player.videoId == null ||
+      //     player.getPlayerState() == YT.PlayerState.ENDED) &&
+      //   watchHist.length > 0
+      // ) {
+      //   histPos--;
+      //   changeVideo(
+      //     watchHist[watchHist.length - histPos - 1].id,
+      //     watchHist[watchHist.length - histPos - 1].thumbnail
+      //   );
+      // } else if (watchHist.length > 0) {
+      //   player.playVideo();
+      // }
     } else if (data.STATE == PAUSE) {
-      player.pauseVideo();
+      // player.pauseVideo();
     } else if (data.STATE == STOP) {
-      player.stopVideo();
+      // player.stopVideo();
     } else if (data.STATE == NEXT) {
-      videoEnded();
+      // videoEnded();
     } else if (data.STATE == PREVIOUS) {
-      playPreviousSong();
+      // playPrevious();
     }
   }
 }
