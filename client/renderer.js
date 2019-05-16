@@ -10,6 +10,12 @@ var player;
 var watchHist = []; // {id:'Huggdy7ohb4', thumbnail:''}
 var histPos = 0;
 // var histPos = 0; //Pos from the right
+var key;
+fetch("key_YouTube.txt")
+  .then(response => response.text())
+  .then(text => {
+    key = text;
+  });
 
 const CREATE_ROOM = 110;
 const JOIN_ROOM = 100;
@@ -34,7 +40,7 @@ var syncClient;
 $.ajax({
   async: false,
   url: "https://bubbles-kangaroo-6898.twil.io/sync-token",
-  success: function(data) {
+  success: function (data) {
     var token = data.token;
     syncClient = new Twilio.Sync.Client(token, {
       // logLevel: 'debug',
@@ -52,6 +58,12 @@ firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 function onYouTubeIframeAPIReady() {
   player = new YT.Player("player", {
     // videoId: 'Huggdy7ohb4',
+    playerVars: {
+      'autoplay': 1, // 0 to enable autoplay, 1 to disable autoplay.
+      'controls': 1, // 0 to show, 1 to hide player controls.
+      'fs': 0, // 0 to disable fullscreen, 1 to enable fullscreen button.
+      'disablekb': 1 // 0 to enable keyboard controls, 1 to disable keyboard controls
+    },
     events: {
       onReady: onPlayerReady,
       onStateChange: videoEnded, //onPlayerStateChange
@@ -84,7 +96,7 @@ function onPlayerReady(event) {
   document.getElementById("volumeSlider").value = player.getVolume();
 }
 
-document.getElementById("search").onkeydown = function(event) {
+document.getElementById("search").onkeydown = function (event) {
   if (event.keyCode == 8) {
     resetSearch(true);
     lastSearch = "";
@@ -107,7 +119,7 @@ function joinRoom(name, password, username) {
     password: password,
     username: username
   });
-  socket.on(SUCCESS, function() {
+  socket.on(SUCCESS, function () {
     // TODO: Handle successful joinRoom.
   });
 }
@@ -116,7 +128,7 @@ createRoom("This is a room name dab dab dab", "Password123");
 joinRoom("This is a room name dab dab dab", "Password123");
 
 // Handel any errors that occur.
-socket.on(ERROR, function(reason) {
+socket.on(ERROR, function (reason) {
   switch (reason.type) {
     case INVALID_CREDS:
       // TODO Handle invalid creds.
@@ -129,12 +141,12 @@ socket.on(ERROR, function(reason) {
   }
 });
 
-socket.on(SYNC, function(state) {
-  console.log("RECIEVED SYNC");
+socket.on(SYNC, function (state) {
+  console.log("RECEIVED SYNC");
   // TODO: Should compare lists not just immediately add them.
-  watchHist = watchHist.concat(state.queue);
+  watchHist = state.queue;
   histPos = state.histPos;
-  // TODO: Set player to current song.
+  // TODO: Set player to current song at current time.
   updateQueue();
 });
 
@@ -143,7 +155,7 @@ function addSong(id, thumbnail) {
   socket.emit(ADD_SONG, { id: id, thumbnail: thumbnail });
 }
 
-socket.on(ADD_SONG, function(data) {
+socket.on(ADD_SONG, function (data) {
   console.log("Received ADD_SONG:", data);
   if (player.videoId == null) {
     changeVideo(data.id, data.thumbnail);
@@ -156,7 +168,7 @@ socket.on(ADD_SONG, function(data) {
   updateQueue();
 });
 
-socket.on(PLAY, function() {
+socket.on(PLAY, function () {
   // if (
   //   (player.videoId == null ||
   //     player.getPlayerState() == YT.PlayerState.ENDED) &&
@@ -171,20 +183,21 @@ socket.on(PLAY, function() {
   //   player.playVideo();
   // }
   console.log("Received PLAY: watchHist=", watchHist);
+  console.log("histPos:", histPos);
   player.playVideo();
 });
 
-socket.on(PAUSE, function() {
+socket.on(PAUSE, function () {
   console.log("Received PAUSE: watchHist=", watchHist);
   player.pauseVideo();
 });
 
-socket.on(STOP, function() {
+socket.on(STOP, function () {
   console.log("Received STOP: watchHist=", watchHist);
   player.stopVideo();
 });
 
-socket.on(NEXT, function() {
+socket.on(NEXT, function () {
   histPos--;
   console.log("Received NEXT: watchHist=", watchHist);
   changeVideo(
@@ -193,7 +206,7 @@ socket.on(NEXT, function() {
   );
 });
 
-socket.on(PREVIOUS, function() {
+socket.on(PREVIOUS, function () {
   playPreviousSong();
   console.log("Received PREVIOUS: watchHist=", watchHist);
 });
@@ -221,18 +234,18 @@ function search() {
     q +
     "&regionCode=us&type=video&videoEmbeddable=true&fields=items(id%2FvideoId%2Csnippet(channelTitle%2Cthumbnails%2Fdefault%2Furl%2Ctitle))&key=" +
     key;
-  $.getJSON(url, function(data) {
+  $.getJSON(url, function (data) {
     console.log(data);
     for (x = 0; x < data.items.length; x++) {
       var title = data.items[x].snippet.title;
       if (title.length > 42) title = title.substring(0, 42) + "...";
       document.getElementById("queryResultContainer").innerHTML += `
                 <div class="queryResult" onclick="addSong('${
-                  data.items[x].id.videoId
-                }', '${data.items[x].snippet.thumbnails.default.url}')">
+        data.items[x].id.videoId
+        }', '${data.items[x].snippet.thumbnails.default.url}')">
                     <img src="${
-                      data.items[x].snippet.thumbnails.default.url
-                    }" alt="">
+        data.items[x].snippet.thumbnails.default.url
+        }" alt="">
                     <div class="queryResultText">
                         <h4>${title}</h4>
                         <h6>${data.items[x].snippet.channelTitle} - 5:06</h6>
@@ -246,13 +259,6 @@ function search() {
 function updateVolume(newVolume) {
   player.setVolume(newVolume);
 }
-
-var key;
-fetch("key_YouTube.txt")
-  .then(response => response.text())
-  .then(text => {
-    key = text;
-  });
 
 function videoEnded(event = { data: 0 }) {
   console.log("videoEnded event=", event);
@@ -304,14 +310,13 @@ function updateQueue() {
   var title = "DEFINITLY THE REAL TITLE OF THIS VIDEO";
   var channelTitle = "THE BEST CHANNEL TITLE EVER";
   for (var x = 0; x < watchHist.length; x++) {
-    x == watchHist.length - histPos - 1;
     document.getElementById("queueContainer").innerHTML += `
             <div class="queryResult" id="${
-              x == watchHist.length - histPos - 1 ? "current" : ""
-            }">
+      x == watchHist.length - histPos ? "current" : ""
+      }">
                 <img src="${
-                  watchHist[x].thumbnail
-                }" alt="THUMBNAIL NOT AVALIABLE">
+      watchHist[x].thumbnail
+      }" alt="THUMBNAIL NOT AVALIABLE">
                 <div class="queryResultText">
                     <h4>${title}</h4>
                     <h6>${channelTitle} - 5:06</h6>
@@ -322,20 +327,20 @@ function updateQueue() {
 }
 
 var ipc = require("electron").ipcRenderer;
-ipc.on("MediaPlayPause", function(event, response) {
+ipc.on("MediaPlayPause", function (event, response) {
   if (player.getPlayerState() != YT.PlayerState.PLAYING) playVideo();
   else pauseVideo();
 });
 
-ipc.on("MediaStop", function(event, response) {
+ipc.on("MediaStop", function (event, response) {
   stopVideo();
 });
 
-ipc.on("MediaNextTrack", function(event, response) {
+ipc.on("MediaNextTrack", function (event, response) {
   playNext();
 });
 
-ipc.on("MediaPreviousTrack", function(event, response) {
+ipc.on("MediaPreviousTrack", function (event, response) {
   playPrevious();
 });
 
@@ -452,17 +457,17 @@ function handleMapUpdate(item) {
 
 syncClient
   .map("clientState")
-  .then(function(state) {
-    state.on("itemUpdated", function(item) {
+  .then(function (state) {
+    state.on("itemUpdated", function (item) {
       console.log(item);
       handleMapUpdate(item);
     });
-    state.on("itemAdded", function(item) {
+    state.on("itemAdded", function (item) {
       console.log(item);
       handleMapUpdate(item);
     });
   })
-  .catch(function(error) {
+  .catch(function (error) {
     console.log(
       "playerState not preiviously set in subscription: setting to PLAY"
     );
@@ -471,11 +476,11 @@ syncClient
 
 syncClient
   .list("queue")
-  .then(function(list) {
+  .then(function (list) {
     // list.removeList();
 
     console.log("Successfully opened a List. SID: " + list.sid);
-    list.on("itemAdded", function(event) {
+    list.on("itemAdded", function (event) {
       console.log("Received itemAdded event: ", event);
       if (event.item.data.value.type == SONG) {
         watchHist.push({
@@ -486,29 +491,29 @@ syncClient
         updateQueue();
       }
 
-      list.getItems().then(function(items) {
+      list.getItems().then(function (items) {
         if (items.length > MAXWATCHHIST) {
-          list.remove(0).then(function() {
+          list.remove(0).then(function () {
             console.log("deleted first item");
           });
         }
       });
     });
 
-    list.getItems().then(function(page) {
+    list.getItems().then(function (page) {
       console.log("Items in list", page.items);
     });
   })
-  .catch(function(error) {
+  .catch(function (error) {
     console.log("Unexpected error", error);
   });
 
-syncClient.map("clientState").then(function(map) {
-  map.getItems().then(function(page) {
+syncClient.map("clientState").then(function (map) {
+  map.getItems().then(function (page) {
     console.log("clientState map: ", page.items);
   });
   // map.removeMap();
 });
 
 // Used for clearing queues
-function resetCloud() {}
+function resetCloud() { }

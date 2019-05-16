@@ -11,7 +11,7 @@ app.on("ready", () => {
   win.loadURL(`file://${__dirname}/index.html`);
   win.setMinimumSize(600, 600);
   win.setTitle("kTube");
-  win.setIcon("./res/kTube_Icon.png");
+  win.setIcon("kTube_Icon.png");
   win.toggleDevTools();
   win.setMenu(null);
 
