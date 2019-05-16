@@ -35,20 +35,6 @@ const PREVIOUS = 3;
 const NEXT = 4;
 const WAITING = 5;
 
-// Initialize client
-var syncClient;
-$.ajax({
-  async: false,
-  url: "https://bubbles-kangaroo-6898.twil.io/sync-token",
-  success: function (data) {
-    var token = data.token;
-    syncClient = new Twilio.Sync.Client(token, {
-      // logLevel: 'debug',
-      id: "MyId3"
-    });
-  }
-});
-
 tag.src = "https://www.youtube.com/iframe_api";
 var firstScriptTag = document.getElementsByTagName("script")[0];
 firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
@@ -59,8 +45,8 @@ function onYouTubeIframeAPIReady() {
   player = new YT.Player("player", {
     // videoId: 'Huggdy7ohb4',
     playerVars: {
-      'autoplay': 1, // 0 to enable autoplay, 1 to disable autoplay.
-      'controls': 1, // 0 to show, 1 to hide player controls.
+      'autoplay': 1, // ?? to enable autoplay, ?? to disable autoplay.
+      'controls': 0, // 0 to hide, 1 to show player controls. 
       'fs': 0, // 0 to disable fullscreen, 1 to enable fullscreen button.
       'disablekb': 1 // 0 to enable keyboard controls, 1 to disable keyboard controls
     },
@@ -169,19 +155,6 @@ socket.on(ADD_SONG, function (data) {
 });
 
 socket.on(PLAY, function () {
-  // if (
-  //   (player.videoId == null ||
-  //     player.getPlayerState() == YT.PlayerState.ENDED) &&
-  //   watchHist.length > 0
-  // ) {
-  //   histPos--;
-  //   changeVideo(
-  //     watchHist[watchHist.length - histPos - 1].id,
-  //     watchHist[watchHist.length - histPos - 1].thumbnail
-  //   );
-  // } else if (watchHist.length > 0) {
-  //   player.playVideo();
-  // }
   console.log("Received PLAY: watchHist=", watchHist);
   console.log("histPos:", histPos);
   player.playVideo();
@@ -265,24 +238,6 @@ function videoEnded(event = { data: 0 }) {
   if (event.data == 0) {
     socket.emit(VIDEO_ENDED);
   }
-  // if (event.data == 0) {
-  //   console.log("VIDEO ENDEDEDEDEDED");
-  //   if (histPos > 0) {
-  //     socket.emit(NEXT);
-  //   } else {
-  //     socket.emit(WAITING);
-  //   }
-  //   // if (histPos > 0) {
-  //   //   histPos--;
-  //   //   changeVideo(
-  //   //     watchHist[watchHist.length - histPos - 1].id,
-  //   //     watchHist[watchHist.length - histPos - 1].thumbnail
-  //   //   );
-  //   // } else console.log("Video Ended but no more videos in queue");
-  // }
-  // else{
-  //     console.log("videoEnded() called but event.data did not say video ended");
-  // }
 }
 
 function playPreviousSong(event) {
@@ -348,16 +303,6 @@ function playVideo() {
   // TODO: Make client not send PLAY command if next is not available.
   //       Want to make sure server can handle invalid PLAY commands first.
   socket.emit(PLAY);
-  // console.log("playVideo() called!");
-  // syncClient
-  //   .map("clientState")
-  //   .then(function(state) {
-  //     state.update("playerState", { STATE: PLAY });
-  //   })
-  //   .catch(function(error) {
-  //     console.log("playerState not preiviously set: setting to PLAY");
-  //     state.set("playerState", { STATE: PLAY });
-  //   });
 }
 
 function pauseVideo() {
@@ -365,15 +310,6 @@ function pauseVideo() {
   //       Want to make sure server can handle invalid PAUSE commands first.
   console.log("pauseVideo() called!");
   socket.emit(PAUSE);
-  // syncClient
-  //   .map("clientState")
-  //   .then(function(state) {
-  //     state.update("playerState", { STATE: PAUSE });
-  //   })
-  //   .catch(function(error) {
-  //     console.log("playerState not preiviously set: setting to PAUSE");
-  //     state.set("playerState", { STATE: PAUSE });
-  //   });
 }
 
 function stopVideo() {
@@ -381,15 +317,6 @@ function stopVideo() {
   //       Want to make sure server can handle invalid STOP commands first.
   console.log("stopVideo() called!");
   socket.emit(STOP);
-  // syncClient
-  //   .map("clientState")
-  //   .then(function(state) {
-  //     state.update("playerState", { STATE: STOP });
-  //   })
-  //   .catch(function(error) {
-  //     console.log("playerState not preiviously set: setting to STOP");
-  //     state.set("playerState", { STATE: STOP });
-  //   });
 }
 
 function playNext() {
@@ -397,15 +324,6 @@ function playNext() {
   //       Want to make sure server can handle invalid NEXT commands first.
   console.log("playNext() called!");
   socket.emit(NEXT);
-  // syncClient
-  //   .map("clientState")
-  //   .then(function(state) {
-  //     state.update("playerState", { STATE: NEXT });
-  //   })
-  //   .catch(function(error) {
-  //     console.log("playerState not preiviously set: setting to NEXT");
-  //     state.set("playerState", { STATE: NEXT });
-  //   });
 }
 
 function playPrevious() {
@@ -413,107 +331,4 @@ function playPrevious() {
   //       Want to make sure server can handle invalid PREVIOUS commands first.
   console.log("playPrevious() called!");
   socket.emit(PREVIOUS);
-  // syncClient
-  //   .map("clientState")
-  //   .then(function(state) {
-  //     state.update("playerState", { STATE: PREVIOUS });
-  //   })
-  //   .catch(function(error) {
-  //     console.log("playerState not preiviously set: setting to PREVIOUS");
-  //     state.set("playerState", { STATE: PREVIOUS });
-  //   });
 }
-
-function handleMapUpdate(item) {
-  var key = item.item.descriptor.key;
-  var data = item.item.descriptor.data;
-  if (key == "playerState") {
-    if (data.STATE == PLAY) {
-      // console.log(player.videoId);
-      // if (
-      //   (player.videoId == null ||
-      //     player.getPlayerState() == YT.PlayerState.ENDED) &&
-      //   watchHist.length > 0
-      // ) {
-      //   histPos--;
-      //   changeVideo(
-      //     watchHist[watchHist.length - histPos - 1].id,
-      //     watchHist[watchHist.length - histPos - 1].thumbnail
-      //   );
-      // } else if (watchHist.length > 0) {
-      //   player.playVideo();
-      // }
-    } else if (data.STATE == PAUSE) {
-      // player.pauseVideo();
-    } else if (data.STATE == STOP) {
-      // player.stopVideo();
-    } else if (data.STATE == NEXT) {
-      // videoEnded();
-    } else if (data.STATE == PREVIOUS) {
-      // playPrevious();
-    }
-  }
-}
-
-syncClient
-  .map("clientState")
-  .then(function (state) {
-    state.on("itemUpdated", function (item) {
-      console.log(item);
-      handleMapUpdate(item);
-    });
-    state.on("itemAdded", function (item) {
-      console.log(item);
-      handleMapUpdate(item);
-    });
-  })
-  .catch(function (error) {
-    console.log(
-      "playerState not preiviously set in subscription: setting to PLAY"
-    );
-    state.set("playerState", { STATE: PLAY });
-  });
-
-syncClient
-  .list("queue")
-  .then(function (list) {
-    // list.removeList();
-
-    console.log("Successfully opened a List. SID: " + list.sid);
-    list.on("itemAdded", function (event) {
-      console.log("Received itemAdded event: ", event);
-      if (event.item.data.value.type == SONG) {
-        watchHist.push({
-          id: event.item.data.value.id,
-          thumbnail: event.item.data.value.thumbnail
-        });
-        histPos++;
-        updateQueue();
-      }
-
-      list.getItems().then(function (items) {
-        if (items.length > MAXWATCHHIST) {
-          list.remove(0).then(function () {
-            console.log("deleted first item");
-          });
-        }
-      });
-    });
-
-    list.getItems().then(function (page) {
-      console.log("Items in list", page.items);
-    });
-  })
-  .catch(function (error) {
-    console.log("Unexpected error", error);
-  });
-
-syncClient.map("clientState").then(function (map) {
-  map.getItems().then(function (page) {
-    console.log("clientState map: ", page.items);
-  });
-  // map.removeMap();
-});
-
-// Used for clearing queues
-function resetCloud() { }
