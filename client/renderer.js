@@ -45,7 +45,7 @@ function onYouTubeIframeAPIReady() {
   player = new YT.Player("player", {
     // videoId: 'Huggdy7ohb4',
     playerVars: {
-      'autoplay': 1, // ?? to enable autoplay, ?? to disable autoplay.
+      'autoplay': 0, // ?? to enable autoplay, ?? to disable autoplay.
       'controls': 0, // 0 to hide, 1 to show player controls. 
       'fs': 0, // 0 to disable fullscreen, 1 to enable fullscreen button.
       'disablekb': 1 // 0 to enable keyboard controls, 1 to disable keyboard controls
@@ -56,6 +56,32 @@ function onYouTubeIframeAPIReady() {
       onError: onError
     }
   });
+}
+
+function videoEnded(event = { data: 0 }) {
+
+  // -1 – unstarted
+  //  0 – ended
+  //  1 – playing
+  //  2 – paused
+  //  3 – buffering
+  //  5 – video cued
+
+  console.log("videoEnded event=", event);
+  if (event.data == 0) {
+    socket.emit(VIDEO_ENDED);
+  }
+
+  // For some reason only the player emitting PLAY command plays when it receives
+  // the PLAY command back.  All other players get set to -1 (Unstarted).
+  if (event.data == -1) {
+    player.playVideo();
+  }
+}
+
+// The player API will call this function when the video player is ready.
+function onPlayerReady(event) {
+  document.getElementById("volumeSlider").value = player.getVolume();
 }
 
 function onError(event) {
@@ -75,11 +101,6 @@ function onError(event) {
   //     console.log("Failed to laod video: see onError(event) in renderer.js for more details.");
   //     console.log(event.data);
   // }
-}
-
-// 4. The API will call this function when the video player is ready.
-function onPlayerReady(event) {
-  document.getElementById("volumeSlider").value = player.getVolume();
 }
 
 document.getElementById("search").onkeydown = function (event) {
@@ -145,6 +166,7 @@ socket.on(ADD_SONG, function (data) {
   console.log("Received ADD_SONG:", data);
   if (player.videoId == null) {
     changeVideo(data.id, data.thumbnail);
+    player.stopVideo();
   }
   watchHist.push({
     id: data.id,
@@ -174,8 +196,8 @@ socket.on(NEXT, function () {
   histPos--;
   console.log("Received NEXT: watchHist=", watchHist);
   changeVideo(
-    watchHist[watchHist.length - histPos - 1].id,
-    watchHist[watchHist.length - histPos - 1].thumbnail
+    watchHist[watchHist.length - histPos].id,
+    watchHist[watchHist.length - histPos].thumbnail
   );
 });
 
@@ -233,24 +255,6 @@ function updateVolume(newVolume) {
   player.setVolume(newVolume);
 }
 
-function videoEnded(event = { data: 0 }) {
-  console.log("videoEnded event=", event);
-  if (event.data == 0) {
-    socket.emit(VIDEO_ENDED);
-  }
-}
-
-function playPreviousSong(event) {
-  console.log("PLAYING PREVIOUS SONG", event);
-  if (histPos < watchHist.length - 1) {
-    histPos++;
-    changeVideo(
-      watchHist[watchHist.length - histPos - 1].id,
-      watchHist[watchHist.length - histPos - 1].thumbnail
-    );
-  } else console.log("No previous videos in queue");
-}
-
 function changeVideo(id, thumbnail) {
   player.loadVideoById((player.videoId = id));
   document.getElementById("thumbnail").src = thumbnail;
@@ -260,24 +264,22 @@ function changeVideo(id, thumbnail) {
 // This is a dumb way of doing this and should be made more efficient
 // But I needed something quick for testing.
 function updateQueue() {
+
+  console.log("UPDATING QUEUE");
+
   document.getElementById("queueContainer").innerHTML = "";
   var data;
   var title = "DEFINITLY THE REAL TITLE OF THIS VIDEO";
   var channelTitle = "THE BEST CHANNEL TITLE EVER";
   for (var x = 0; x < watchHist.length; x++) {
-    document.getElementById("queueContainer").innerHTML += `
-            <div class="queryResult" id="${
-      x == watchHist.length - histPos ? "current" : ""
-      }">
-                <img src="${
-      watchHist[x].thumbnail
-      }" alt="THUMBNAIL NOT AVALIABLE">
-                <div class="queryResultText">
-                    <h4>${title}</h4>
-                    <h6>${channelTitle} - 5:06</h6>
-                </div>
-            </div>
-            `;
+    document.getElementById("queueContainer").innerHTML +=
+      `<div class="queryResult" id="${x == watchHist.length - histPos ? "current" : ""}">
+        <img src="${ watchHist[x].thumbnail}" alt="THUMBNAIL NOT AVAILABLE"/>
+          <div class="queryResultText">
+              <h4>${title}</h4>
+              <h6>${channelTitle} - 5:06</h6>
+          </div>
+      </div>`;
   }
 }
 
@@ -331,4 +333,15 @@ function playPrevious() {
   //       Want to make sure server can handle invalid PREVIOUS commands first.
   console.log("playPrevious() called!");
   socket.emit(PREVIOUS);
+}
+
+function playPreviousSong(event) {
+  console.log("PLAYING PREVIOUS SONG", event);
+  // if (histPos < watchHist.length - 1) {
+  histPos++;
+  changeVideo(
+    watchHist[watchHist.length - histPos].id,
+    watchHist[watchHist.length - histPos].thumbnail
+  );
+  // } else console.log("No previous videos in queue");
 }

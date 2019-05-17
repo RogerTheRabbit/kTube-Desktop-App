@@ -21,7 +21,7 @@ var rooms = {};
 
 // App setup
 var app = express();
-var server = app.listen(PORT, function() {
+var server = app.listen(PORT, function () {
   console.log("Listening on port " + PORT);
 });
 
@@ -29,16 +29,16 @@ var server = app.listen(PORT, function() {
 var io = socket(server);
 
 function updateUsersState(room, newState) {
-  Object.keys(rooms[room].users).forEach(function(key) {
+  Object.keys(rooms[room].users).forEach(function (key) {
     rooms[room].users[key] = newState;
   });
 }
 
-io.on("connection", function(socket) {
+io.on("connection", function (socket) {
   console.log("Client connected to server with id:", socket.id);
   var room;
 
-  socket.on(JOIN_ROOM, function(data) {
+  socket.on(JOIN_ROOM, function (data) {
     if (data.name in rooms && rooms[data.name].password == data.password) {
       socket.join(data.name);
       room = data.name;
@@ -52,24 +52,24 @@ io.on("connection", function(socket) {
       socket.emit(ERROR, { type: INVALID_CREDS });
     }
 
-    socket.on(ADD_SONG, function(song) {
+    socket.on(ADD_SONG, function (song) {
       io.to(room).emit(ADD_SONG, song);
       rooms[room].state.queue.push(song);
       rooms[room].state.histPos++;
     });
 
-    socket.on(WAITING, function() {
+    socket.on(WAITING, function () {
       rooms[room].users[socket.id] = WAITING;
     });
 
-    socket.on(VIDEO_ENDED, function() {
+    socket.on(VIDEO_ENDED, function () {
       // Set socket status to WAITING
       rooms[room].users[socket.id] = WAITING;
       // If next song is available
       if (rooms[room].state.histPos > 0) {
         // Check if all connected clients have ended their songs as well
         allWaiting = true;
-        Object.keys(rooms[room].users).every(function(key) {
+        Object.keys(rooms[room].users).every(function (key) {
           if (rooms[room].users[key] != WAITING) {
             allWaiting = false;
             return false;
@@ -84,35 +84,35 @@ io.on("connection", function(socket) {
       }
     });
 
-    socket.on(PLAY, function() {
+    socket.on(PLAY, function () {
       io.to(room).emit(PLAY);
     });
 
-    socket.on(PAUSE, function() {
+    socket.on(PAUSE, function () {
       io.to(room).emit(PAUSE);
     });
 
-    socket.on(STOP, function() {
+    socket.on(STOP, function () {
       io.to(room).emit(STOP);
     });
 
-    socket.on(PREVIOUS, function() {
-      if (rooms[room].state.histPos < rooms[room].state.queue.length - 1) {
+    socket.on(PREVIOUS, function () {
+      if (rooms[room].state.histPos < rooms[room].state.queue.length) {
         io.to(room).emit(PREVIOUS);
         rooms[room].state.histPos++;
       }
     });
 
-    socket.on(NEXT, function() {
+    socket.on(NEXT, function () {
       // If next song is available, send play next command.
-      if (rooms[room].state.histPos > 0) {
+      if (rooms[room].state.histPos > 1) {
         io.to(room).emit(NEXT);
         rooms[room].state.histPos--;
       }
     });
   });
 
-  socket.on(CREATE_ROOM, function(room) {
+  socket.on(CREATE_ROOM, function (room) {
     if (!(room.name in rooms)) {
       rooms[room.name] = {
         password: room.password,
@@ -129,17 +129,12 @@ io.on("connection", function(socket) {
   });
 
   // Log client disconnecting
-  socket.on("disconnect", function(reason) {
-    console.log(
-      "Client disconnected from server with id:'",
-      socket.id,
-      "' for reason:",
-      reason
-    );
+  socket.on("disconnect", function (reason) {
+    console.log("Client disconnected from server with id:'", socket.id, "' for reason:", reason);
     delete rooms[room].users[socket.id];
-    if (rooms[room].users.length < 1) {
+    if (Object.keys(rooms[room].users).length < 1) {
       delete rooms[room];
-      console.log(`[EMPTY ROOM] \"${room}\" has been deleted.`);
+      console.log(`[${room}] Room is empty and has been deleted.`);
     }
   });
 });
