@@ -13,7 +13,7 @@ app.on("ready", () => {
   win.setTitle("kTube");
   win.setIcon("./resources/kTube_Icon.png");
   win.toggleDevTools();
-  win.setMenu(null);
+  // win.setMenu(null);
 
   // Register a 'MediaPlayPause' shortcut listener.
   const MediaPlayPause = globalShortcut.register("MediaPlayPause", () => {
@@ -55,7 +55,7 @@ app.on("ready", () => {
   }
 });
 
-// Seacurity feature: https://electronjs.org/docs/tutorial/security#12-disable-or-limit-navigation
+// Security feature: https://electronjs.org/docs/tutorial/security#12-disable-or-limit-navigation
 app.on("web-contents-created", (event, contents) => {
   contents.on("will-navigate", (event, navigationUrl) => {
     const parsedUrl = new URL(navigationUrl);

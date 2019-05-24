@@ -45,7 +45,7 @@ function onYouTubeIframeAPIReady() {
   player = new YT.Player("player", {
     // videoId: 'Huggdy7ohb4',
     playerVars: {
-      'autoplay': 0, // ?? to enable autoplay, ?? to disable autoplay.
+      'autoplay': 1, // ?? to enable autoplay, ?? to disable autoplay.
       'controls': 0, // 0 to hide, 1 to show player controls. 
       'fs': 0, // 0 to disable fullscreen, 1 to enable fullscreen button.
       'disablekb': 1 // 0 to enable keyboard controls, 1 to disable keyboard controls
@@ -68,20 +68,31 @@ function videoEnded(event = { data: 0 }) {
   //  5 – video cued
 
   console.log("videoEnded event=", event);
-  if (event.data == 0) {
+  if (event.data === 0) {
     socket.emit(VIDEO_ENDED);
   }
 
   // For some reason only the player emitting PLAY command plays when it receives
   // the PLAY command back.  All other players get set to -1 (Unstarted).
-  if (event.data == -1) {
-    player.playVideo();
-  }
+  // if (event.data === 5) {
+  //   console.log("VIDEO BUFFERING, PLAYING VIDEO")
+  //   event.target.playVideo();
+  //   // player.playVideo();
+  //   console.log("Video playing:", player.getPlayerState())
+  // }
+  // if (event.data === -1) {
+  //   console.log("VIDEO UNSTARTED, PLAYING VIDEO")
+  //   // player.playVideo();
+  //   event.target.playVideo();
+  //   console.log("Video playing:", player.getPlayerState())
+  // }
+
 }
 
 // The player API will call this function when the video player is ready.
 function onPlayerReady(event) {
   document.getElementById("volumeSlider").value = player.getVolume();
+  socket.emit(SYNC);
 }
 
 function onError(event) {
@@ -93,7 +104,7 @@ function onError(event) {
 
   console.log(event);
 
-  // if (event.data==150 || event.data == 101) {
+  // if (event.data === 150 || event.data === 101) {
   //     console.log("Failed to load video: Video not embeddable...picking next related song");
   //     changeVideoOnEnd({data:0});
   // }
@@ -104,11 +115,13 @@ function onError(event) {
 }
 
 document.getElementById("search").onkeydown = function (event) {
-  if (event.keyCode == 8) {
+  // If backspace pressed
+  if (event.keyCode === 8) {
     resetSearch(true);
     lastSearch = "";
   }
-  if (event.keyCode == 13) {
+  // If enter pressed
+  if (event.keyCode === 13) {
     search();
   }
 };
@@ -150,11 +163,14 @@ socket.on(ERROR, function (reason) {
 
 socket.on(SYNC, function (state) {
   console.log("RECEIVED SYNC");
-  // TODO: Should compare lists not just immediately add them.
   watchHist = state.queue;
   histPos = state.histPos;
   // TODO: Set player to current song at current time.
-  updateQueue();
+  if (watchHist.length > 0) {
+    updateQueue();
+    changeVideo(watchHist[watchHist.length - histPos].id,
+      watchHist[watchHist.length - histPos].thumbnail);
+  }
 });
 
 // Tell server what song to add to queue
@@ -164,9 +180,9 @@ function addSong(id, thumbnail) {
 
 socket.on(ADD_SONG, function (data) {
   console.log("Received ADD_SONG:", data);
-  if (player.videoId == null) {
+  if (player.videoId === null) {
     changeVideo(data.id, data.thumbnail);
-    player.stopVideo();
+    player.pauseVideo();
   }
   watchHist.push({
     id: data.id,
@@ -180,6 +196,7 @@ socket.on(PLAY, function () {
   console.log("Received PLAY: watchHist=", watchHist);
   console.log("histPos:", histPos);
   player.playVideo();
+  console.log("PlayerState:", player.getPlayerState());
 });
 
 socket.on(PAUSE, function () {
@@ -214,7 +231,7 @@ function resetSearch(resetQ = true) {
 var lastSearch = "";
 function search() {
   var q = document.getElementById("search").value.trim();
-  if (lastSearch == q || q == "") {
+  if (lastSearch === q || q === "") {
     return;
   }
   lastSearch = q;
@@ -257,6 +274,7 @@ function updateVolume(newVolume) {
 
 function changeVideo(id, thumbnail) {
   player.loadVideoById((player.videoId = id));
+  // player.cueVideoById((player.videoId = id));
   document.getElementById("thumbnail").src = thumbnail;
   updateQueue();
 }
@@ -273,7 +291,7 @@ function updateQueue() {
   var channelTitle = "THE BEST CHANNEL TITLE EVER";
   for (var x = 0; x < watchHist.length; x++) {
     document.getElementById("queueContainer").innerHTML +=
-      `<div class="queryResult" id="${x == watchHist.length - histPos ? "current" : ""}">
+      `<div class="queryResult" id="${x === watchHist.length - histPos ? "current" : ""}">
         <img src="${ watchHist[x].thumbnail}" alt="THUMBNAIL NOT AVAILABLE"/>
           <div class="queryResultText">
               <h4>${title}</h4>

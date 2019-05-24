@@ -47,7 +47,6 @@ io.on("connection", function (socket) {
         type: NEW_USER,
         username: data.username
       });
-      io.to(room).emit(SYNC, rooms[room].state);
     } else {
       socket.emit(ERROR, { type: INVALID_CREDS });
     }
@@ -82,6 +81,10 @@ io.on("connection", function (socket) {
           updateUsersState(room, PLAY);
         }
       }
+    });
+
+    socket.on(SYNC, function () {
+      io.to(room).emit(SYNC, rooms[room].state);
     });
 
     socket.on(PLAY, function () {
