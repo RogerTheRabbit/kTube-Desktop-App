@@ -1,7 +1,14 @@
 var io = require("socket.io-client");
 
+
+// TODO: For testing purposes -- Remove later.
+const fs = require('fs');
+var ip = fs.readFileSync('ip.txt');
+
 //Make connection
-var socket = io.connect("http://localhost:4000");
+// var socket = io.connect("http://localhost:4000");
+var socket = io.connect("http://" + ip + ":4000");
+console.log("Trying to connect to:", "http://" + ip + ":4000");
 
 // 2. This code loads the IFrame Player API code asynchronously.
 var tag = document.createElement("script");
@@ -115,11 +122,11 @@ function onError(event) {
 }
 
 document.getElementById("search").onkeydown = function (event) {
-  // If backspace pressed
-  if (event.keyCode === 8) {
-    resetSearch(true);
-    lastSearch = "";
-  }
+  // // If backspace pressed
+  // if (event.keyCode === 8) {
+  //   resetSearch(true);
+  //   lastSearch = "";
+  // }
   // If enter pressed
   if (event.keyCode === 13) {
     search();
@@ -163,32 +170,50 @@ socket.on(ERROR, function (reason) {
 
 socket.on(SYNC, function (state) {
   console.log("RECEIVED SYNC");
+  console.log("state", state);
   watchHist = state.queue;
   histPos = state.histPos;
   // TODO: Set player to current song at current time.
   if (watchHist.length > 0) {
     updateQueue();
-    changeVideo(watchHist[watchHist.length - histPos].id,
-      watchHist[watchHist.length - histPos].thumbnail);
+    changeVideo(watchHist[watchHist.length - histPos]);
+    setInterval(function () {
+      updateProgress();
+    }, 1000);
+  }
+
+  switch (state.playerState) {
+    case PLAY:
+      player.playVideo();
+      break;
+    case PAUSE:
+      player.pauseVideo();
+      break;
+    case STOP:
+      player.stopVideo();
+    default:
+      console.log("RECEIVED INVALID PLAYER STATE DURING SYNC GOT:", state.playerState);
   }
 });
 
 // Tell server what song to add to queue
-function addSong(id, thumbnail) {
-  socket.emit(ADD_SONG, { id: id, thumbnail: thumbnail });
+function addSong(id, thumbnail, title, channelTitle) {
+  socket.emit(ADD_SONG, { id: id, thumbnail: thumbnail, title: String(title), channelTitle: channelTitle });
 }
 
-socket.on(ADD_SONG, function (data) {
-  console.log("Received ADD_SONG:", data);
-  if (player.videoId === null) {
-    changeVideo(data.id, data.thumbnail);
-    player.pauseVideo();
-  }
-  watchHist.push({
-    id: data.id,
-    thumbnail: data.thumbnail
-  });
+socket.on(ADD_SONG, function (song) {
+  console.log("Received ADD_SONG:", song);
+  watchHist.push({ song });
   histPos++;
+  if (player.videoId == null) {
+
+    changeVideo(song);
+    // player.pauseVideo();
+    // TODO: See if interval can be paused when video not playing to reduce cpu usage when not playing.
+    setInterval(function () {
+      updateProgress();
+    }, 1000);
+  }
   updateQueue();
 });
 
@@ -212,10 +237,7 @@ socket.on(STOP, function () {
 socket.on(NEXT, function () {
   histPos--;
   console.log("Received NEXT: watchHist=", watchHist);
-  changeVideo(
-    watchHist[watchHist.length - histPos].id,
-    watchHist[watchHist.length - histPos].thumbnail
-  );
+  changeVideo(watchHist[watchHist.length - histPos]);
 });
 
 socket.on(PREVIOUS, function () {
@@ -228,8 +250,18 @@ function resetSearch(resetQ = true) {
   if (resetQ) document.getElementById("search").value = "";
 }
 
+function focusNav() {
+  document.getElementsByClassName("nav")[0].focus();
+  document.getElementById("queryResultContainer").hidden = false;
+}
+
+function blurNav() {
+  document.getElementById("queryResultContainer").hidden = true;
+}
+
 var lastSearch = "";
 function search() {
+  focusNav();
   var q = document.getElementById("search").value.trim();
   if (lastSearch === q || q === "") {
     return;
@@ -251,31 +283,35 @@ function search() {
     for (x = 0; x < data.items.length; x++) {
       var title = data.items[x].snippet.title;
       if (title.length > 42) title = title.substring(0, 42) + "...";
+      //TODO: If there is a single quote in the title, it will break the string and is also an opening for XSS attack.
       document.getElementById("queryResultContainer").innerHTML += `
-                <div class="queryResult" onclick="addSong('${
-        data.items[x].id.videoId
-        }', '${data.items[x].snippet.thumbnails.default.url}')">
-                    <img src="${
-        data.items[x].snippet.thumbnails.default.url
-        }" alt="">
-                    <div class="queryResultText">
-                        <h4>${title}</h4>
-                        <h6>${data.items[x].snippet.channelTitle} - 5:06</h6>
-                    </div>
-                </div>
-                `;
+      <div class="queryResult" onclick="addSong('${(data.items[x].id.videoId)}', '${(data.items[x].snippet.thumbnails.default.url)}', '${(data.items[x].snippet.title)}', '${(data.items[x].snippet.channelTitle)}')">
+          <img src="${String(data.items[x].snippet.thumbnails.default.url)}" alt=""/>
+          <div class="queryResultText">
+              <h4>${title}</h4>
+              <h6>${data.items[x].snippet.channelTitle} - 5:06</h6>
+          </div>
+      </div>
+      `;
     }
   });
+}
+
+// Update the --progress property of the current playing song with a value of the current percentage through song.
+// CSS for #current reads --progress property to show progress
+function updateProgress() {
+  document.getElementById("current").style.setProperty("--progress", (100 * player.getCurrentTime() / player.getDuration()) + "%");
 }
 
 function updateVolume(newVolume) {
   player.setVolume(newVolume);
 }
 
-function changeVideo(id, thumbnail) {
-  player.loadVideoById((player.videoId = id));
+function changeVideo(video) {
+  console.log("video", video);
+  player.loadVideoById((player.videoId = video.id));
   // player.cueVideoById((player.videoId = id));
-  document.getElementById("thumbnail").src = thumbnail;
+  document.getElementById("thumbnail").src = video.thumbnail;
   updateQueue();
 }
 
@@ -287,16 +323,15 @@ function updateQueue() {
 
   document.getElementById("queueContainer").innerHTML = "";
   var data;
-  var title = "DEFINITLY THE REAL TITLE OF THIS VIDEO";
-  var channelTitle = "THE BEST CHANNEL TITLE EVER";
   for (var x = 0; x < watchHist.length; x++) {
     document.getElementById("queueContainer").innerHTML +=
       `<div class="queryResult" id="${x === watchHist.length - histPos ? "current" : ""}">
         <img src="${ watchHist[x].thumbnail}" alt="THUMBNAIL NOT AVAILABLE"/>
           <div class="queryResultText">
-              <h4>${title}</h4>
-              <h6>${channelTitle} - 5:06</h6>
+              <h4>${watchHist[x].title}</h4>
+              <h6>${watchHist[x].channelTitle} - 5:06</h6>
           </div>
+          <button type="button" class="btn-floating btn-lg purple-gradient btn-rounded float-right fas fa-times"></button>
       </div>`;
   }
 }
@@ -357,9 +392,6 @@ function playPreviousSong(event) {
   console.log("PLAYING PREVIOUS SONG", event);
   // if (histPos < watchHist.length - 1) {
   histPos++;
-  changeVideo(
-    watchHist[watchHist.length - histPos].id,
-    watchHist[watchHist.length - histPos].thumbnail
-  );
+  changeVideo(watchHist[watchHist.length - histPos]);
   // } else console.log("No previous videos in queue");
 }

@@ -21,8 +21,13 @@ var rooms = {};
 
 // App setup
 var app = express();
-var server = app.listen(PORT, function () {
-  console.log("Listening on port " + PORT);
+
+// TODO: For testing purposes -- Remove later.
+const fs = require('fs')
+var ip = fs.readFileSync('ip.txt');
+
+var server = app.listen(PORT, ip, function () {
+  console.log("Listening on " + ip + ":" + PORT);
 });
 
 // Socket setup
@@ -88,14 +93,17 @@ io.on("connection", function (socket) {
     });
 
     socket.on(PLAY, function () {
+      rooms[room].state.playerState = PLAY;
       io.to(room).emit(PLAY);
     });
 
     socket.on(PAUSE, function () {
+      rooms[room].state.playerState = PAUSE;
       io.to(room).emit(PAUSE);
     });
 
     socket.on(STOP, function () {
+      rooms[room].state.playerState = STOP;
       io.to(room).emit(STOP);
     });
 
@@ -123,7 +131,8 @@ io.on("connection", function (socket) {
         state: {
           queue: [],
           cur_playing: "",
-          histPos: 0
+          histPos: 0,
+          playerState: null
         }
       };
     } else {

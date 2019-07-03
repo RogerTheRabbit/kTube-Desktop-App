@@ -1,5 +1,6 @@
 const electron = require("electron");
 const { app, globalShortcut, ipcMain, BrowserWindow, shell } = electron;
+const { session } = require('electron');
 const URL = require("url").URL;
 
 // Consider using Twillio for app sync: https://www.twilio.com/docs/sync/quickstart/js
@@ -91,6 +92,15 @@ app.on("web-contents-created", (event, contents) => {
     //   }
   });
 });
+
+// // Security feature: https://electronjs.org/docs/tutorial/security#6-define-a-content-security-policy
+// session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+//   callback({
+//     responseHeaders: Object.assign({
+//       "Content-Security-Policy": ["default-src 'self'"]
+//     }, details.responseHeaders)
+//   });
+// });
 
 app.on("will-quit", () => {
   // // Unregister a shortcut.
