@@ -36,7 +36,8 @@
   display: flex;
   align-items: center;
   padding: 0.5em 0.5em 0.5em 0.5em;
-  white-space: normal;
+  /* white-space: normal; */
+  height: 122px;
 }
 
 .queryResult:hover {
@@ -81,8 +82,9 @@
   margin: 5 auto;
   height: 100%;
   max-width: 500px;
-  display: flex;
+  display: block;
   flex-direction: column;
+  overflow: scroll;
 }
 
 

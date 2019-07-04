@@ -5,24 +5,6 @@ var io = require("socket.io-client");
 const fs = require('fs');
 var ip = fs.readFileSync('ip.txt');
 
-//Make connection
-// var socket = io.connect("http://localhost:4000");
-var socket = io.connect("http://" + ip + ":4000");
-console.log("Trying to connect to:", "http://" + ip + ":4000");
-
-// 2. This code loads the IFrame Player API code asynchronously.
-var tag = document.createElement("script");
-var player;
-// var curId = 'J_CFBjAyPWE'; //'ypsQuQnoZLY';
-var watchHist = []; // {id:'Huggdy7ohb4', thumbnail:''}
-var histPos = 0;
-// var histPos = 0; //Pos from the right
-var key;
-fetch("key_YouTube.txt")
-  .then(response => response.text())
-  .then(text => {
-    key = text;
-  });
 
 const CREATE_ROOM = 110;
 const JOIN_ROOM = 100;
@@ -42,6 +24,24 @@ const PREVIOUS = 3;
 const NEXT = 4;
 const WAITING = 5;
 
+
+//Make connection
+// var socket = io.connect("http://localhost:4000");
+var socket = io.connect("http://" + ip + ":4000");
+console.log("Trying to connect to:", "http://" + ip + ":4000");
+
+// 2. This code loads the IFrame Player API code asynchronously.
+var tag = document.createElement("script");
+var player;
+var watchHist = [];
+var histPos = 0;
+var key;
+fetch("key_YouTube.txt")
+  .then(response => response.text())
+  .then(text => {
+    key = text;
+  });
+
 tag.src = "https://www.youtube.com/iframe_api";
 var firstScriptTag = document.getElementsByTagName("script")[0];
 firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
@@ -52,10 +52,10 @@ function onYouTubeIframeAPIReady() {
   player = new YT.Player("player", {
     // videoId: 'Huggdy7ohb4',
     playerVars: {
-      'autoplay': 1, // ?? to enable autoplay, ?? to disable autoplay.
-      'controls': 0, // 0 to hide, 1 to show player controls. 
-      'fs': 0, // 0 to disable fullscreen, 1 to enable fullscreen button.
-      'disablekb': 1 // 0 to enable keyboard controls, 1 to disable keyboard controls
+      'autoplay': 1,  // ?? to enable autoplay, ?? to disable autoplay.
+      'controls': 0,  // 0 to hide, 1 to show player controls. 
+      'fs': 0,        // 0 to disable fullscreen, 1 to enable fullscreen button.
+      'disablekb': 1  // 0 to enable keyboard controls, 1 to disable keyboard controls
     },
     events: {
       onReady: onPlayerReady,
@@ -78,22 +78,6 @@ function videoEnded(event = { data: 0 }) {
   if (event.data === 0) {
     socket.emit(VIDEO_ENDED);
   }
-
-  // For some reason only the player emitting PLAY command plays when it receives
-  // the PLAY command back.  All other players get set to -1 (Unstarted).
-  // if (event.data === 5) {
-  //   console.log("VIDEO BUFFERING, PLAYING VIDEO")
-  //   event.target.playVideo();
-  //   // player.playVideo();
-  //   console.log("Video playing:", player.getPlayerState())
-  // }
-  // if (event.data === -1) {
-  //   console.log("VIDEO UNSTARTED, PLAYING VIDEO")
-  //   // player.playVideo();
-  //   event.target.playVideo();
-  //   console.log("Video playing:", player.getPlayerState())
-  // }
-
 }
 
 // The player API will call this function when the video player is ready.
@@ -109,30 +93,17 @@ function onError(event) {
   // 101 – The owner of the requested video does not allow it to be played in embedded players.
   // 150 – This error is the same as 101. It's just a 101 error in disguise!
 
-  console.log(event);
-
-  // if (event.data === 150 || event.data === 101) {
-  //     console.log("Failed to load video: Video not embeddable...picking next related song");
-  //     changeVideoOnEnd({data:0});
-  // }
-  // else {
-  //     console.log("Failed to laod video: see onError(event) in renderer.js for more details.");
-  //     console.log(event.data);
-  // }
+  console.log("Player error:", event);
 }
 
 document.getElementById("search").onkeydown = function (event) {
-  // // If backspace pressed
-  // if (event.keyCode === 8) {
-  //   resetSearch(true);
-  //   lastSearch = "";
-  // }
   // If enter pressed
   if (event.keyCode === 13) {
     search();
   }
 };
 
+// Sends command to server to create room with username and password.
 function createRoom(name, password) {
   socket.emit(CREATE_ROOM, {
     name: name,
@@ -140,6 +111,7 @@ function createRoom(name, password) {
   });
 }
 
+// Sends command to server join room with name and password as username.
 function joinRoom(name, password, username) {
   socket.emit(JOIN_ROOM, {
     name: name,
@@ -151,32 +123,32 @@ function joinRoom(name, password, username) {
   });
 }
 
-createRoom("This is a room name dab dab dab", "Password123");
-joinRoom("This is a room name dab dab dab", "Password123");
+// TODO: For testing -- Remove later
+createRoom("This is a room name dab dab dab2", "Password123");
+joinRoom("This is a room name dab dab dab2", "Password123");
 
-// Handel any errors that occur.
+// Handel any errors that the server sends.
 socket.on(ERROR, function (reason) {
   switch (reason.type) {
     case INVALID_CREDS:
       // TODO Handle invalid creds.
-      console.log(
-        "Either invalid room name or invalid password when connecting to room."
-      );
+      console.log("Either invalid room name or invalid password when connecting to room.");
       break;
     default:
       console.log("Unknown error:", reason);
   }
 });
 
+// Handel SYNC command from server.  Sets current state of client to state held by the server.
 socket.on(SYNC, function (state) {
   console.log("RECEIVED SYNC");
-  console.log("state", state);
   watchHist = state.queue;
   histPos = state.histPos;
   // TODO: Set player to current song at current time.
   if (watchHist.length > 0) {
     updateQueue();
     changeVideo(watchHist[watchHist.length - histPos]);
+    // Start timer to update song progress periodically.
     setInterval(function () {
       updateProgress();
     }, 1000);
@@ -196,17 +168,17 @@ socket.on(SYNC, function (state) {
   }
 });
 
-// Tell server what song to add to queue
+// Send server song to add to queue
 function addSong(id, thumbnail, title, channelTitle) {
   socket.emit(ADD_SONG, { id: id, thumbnail: thumbnail, title: String(title), channelTitle: channelTitle });
 }
 
+// Handle song being added to queue. 
 socket.on(ADD_SONG, function (song) {
-  console.log("Received ADD_SONG:", song);
-  watchHist.push({ song });
+  watchHist.push(song);
   histPos++;
+  // If player does not have a song currently selected, change the player to the song added.
   if (player.videoId == null) {
-
     changeVideo(song);
     // player.pauseVideo();
     // TODO: See if interval can be paused when video not playing to reduce cpu usage when not playing.
@@ -217,73 +189,73 @@ socket.on(ADD_SONG, function (song) {
   updateQueue();
 });
 
+// Handel PLAY command from server
 socket.on(PLAY, function () {
   console.log("Received PLAY: watchHist=", watchHist);
-  console.log("histPos:", histPos);
   player.playVideo();
-  console.log("PlayerState:", player.getPlayerState());
 });
 
+// Handel PAUSE command from server
 socket.on(PAUSE, function () {
   console.log("Received PAUSE: watchHist=", watchHist);
   player.pauseVideo();
 });
 
+// Handel STOP command from server
 socket.on(STOP, function () {
   console.log("Received STOP: watchHist=", watchHist);
   player.stopVideo();
 });
 
+// Handel NEXT command from server
 socket.on(NEXT, function () {
   histPos--;
   console.log("Received NEXT: watchHist=", watchHist);
   changeVideo(watchHist[watchHist.length - histPos]);
 });
 
+// Handel PREVIOUS command from server
 socket.on(PREVIOUS, function () {
   playPreviousSong();
   console.log("Received PREVIOUS: watchHist=", watchHist);
 });
 
-function resetSearch(resetQ = true) {
+// Clear the search results
+// If resetS is true, the search field will also be cleared.
+function resetSearch(resetS = true) {
   document.getElementById("queryResultContainer").innerHTML = "";
-  if (resetQ) document.getElementById("search").value = "";
+  if (resetS) document.getElementById("search").value = "";
 }
 
+// Adds functionality to the search feature to be more intuitive.
 function focusNav() {
   document.getElementsByClassName("nav")[0].focus();
   document.getElementById("queryResultContainer").hidden = false;
 }
 
+// Adds functionality to the search feature to be more intuitive. (Used by div.nav in index.html)
 function blurNav() {
   document.getElementById("queryResultContainer").hidden = true;
 }
 
+// Handles fetching query results when a search is made.
 var lastSearch = "";
 function search() {
   focusNav();
   var q = document.getElementById("search").value.trim();
-  if (lastSearch === q || q === "") {
-    return;
-  }
+  // If search is same as previous or empty, do not change search results.
+  if (lastSearch === q || q === "") { return; }
   lastSearch = q;
   resetSearch(false);
   q = encodeURIComponent(q);
-  // url = "https://www.googleapis.com/youtube/v3/search?part=snippet&videoSyndicated=true&videoEmbeddable=true&maxResults=" + MAXRESULTS + "&q=" + q +"&type=video&fields=items(id%2FvideoId%2Csnippet(channelTitle%2Cthumbnails%2Fdefault%2Furl%2Ctitle))&key=" + key
-  // url = "https://www.googleapis.com/youtube/v3/search?part=snippet&eventType=completed&maxResults=" + MAXRESULTS + "&q=" + q +"&type=video&videoEmbeddable=true&videoSyndicated=true&fields=items(id%2FvideoId%2Csnippet(channelTitle%2Cthumbnails%2Fdefault%2Furl%2Ctitle))&key=" + key
-  url =
-    "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=" +
-    MAXRESULTS +
-    "&q=" +
-    q +
-    "&regionCode=us&type=video&videoEmbeddable=true&fields=items(id%2FvideoId%2Csnippet(channelTitle%2Cthumbnails%2Fdefault%2Furl%2Ctitle))&key=" +
-    key;
+  url = "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=" + MAXRESULTS + "&q=" + q + "&regionCode=us&type=video&videoEmbeddable=true&fields=items(id%2FvideoId%2Csnippet(channelTitle%2Cthumbnails%2Fdefault%2Furl%2Ctitle))&key=" + key;
   $.getJSON(url, function (data) {
-    console.log(data);
     for (x = 0; x < data.items.length; x++) {
       var title = data.items[x].snippet.title;
+      // Truncate the song title if it's too long.
       if (title.length > 42) title = title.substring(0, 42) + "...";
-      //TODO: If there is a single quote in the title, it will break the string and is also an opening for XSS attack.
+      // TODO: If there is a single quote in the title, it will break the string and is also an opening for XSS attack.
+      // 
       document.getElementById("queryResultContainer").innerHTML += `
       <div class="queryResult" onclick="addSong('${(data.items[x].id.videoId)}', '${(data.items[x].snippet.thumbnails.default.url)}', '${(data.items[x].snippet.title)}', '${(data.items[x].snippet.channelTitle)}')">
           <img src="${String(data.items[x].snippet.thumbnails.default.url)}" alt=""/>
@@ -298,31 +270,31 @@ function search() {
 }
 
 // Update the --progress property of the current playing song with a value of the current percentage through song.
-// CSS for #current reads --progress property to show progress
+// CSS for #current reads the --progress property to show progress
 function updateProgress() {
   document.getElementById("current").style.setProperty("--progress", (100 * player.getCurrentTime() / player.getDuration()) + "%");
 }
 
+// Changes the volume of the player.
 function updateVolume(newVolume) {
   player.setVolume(newVolume);
 }
 
-function changeVideo(video) {
-  console.log("video", video);
-  player.loadVideoById((player.videoId = video.id));
-  // player.cueVideoById((player.videoId = id));
-  document.getElementById("thumbnail").src = video.thumbnail;
+// Changes what song (video) the player is playing.
+function changeVideo(song) {
+  player.loadVideoById((player.videoId = song.id));
+  document.getElementById("thumbnail").src = song.thumbnail;
   updateQueue();
 }
 
-// This is a dumb way of doing this and should be made more efficient
+// This is probably a dumb way of doing this and should be made more efficient
 // But I needed something quick for testing.
+// Deletes all divs in the queueContainer and then rebuilds them from the local queue.
 function updateQueue() {
 
   console.log("UPDATING QUEUE");
 
   document.getElementById("queueContainer").innerHTML = "";
-  var data;
   for (var x = 0; x < watchHist.length; x++) {
     document.getElementById("queueContainer").innerHTML +=
       `<div class="queryResult" id="${x === watchHist.length - histPos ? "current" : ""}">
@@ -336,62 +308,68 @@ function updateQueue() {
   }
 }
 
+// Used for communication between the render thread (this code / renderer.js) and the main thread (main.js)
 var ipc = require("electron").ipcRenderer;
+
+// Upon receiving MediaPlayPause command from main, toggle player between play/pause.
 ipc.on("MediaPlayPause", function (event, response) {
   if (player.getPlayerState() != YT.PlayerState.PLAYING) playVideo();
   else pauseVideo();
 });
 
+// Upon receiving MediaStop command from main, stop player.
 ipc.on("MediaStop", function (event, response) {
   stopVideo();
 });
 
+// Upon receiving MediaNextTrack command from main, play next song.
 ipc.on("MediaNextTrack", function (event, response) {
   playNext();
 });
 
+// Upon receiving MediaPreviousTrack command from main, play previous song.
 ipc.on("MediaPreviousTrack", function (event, response) {
   playPrevious();
 });
 
+// Makes sure PLAY is a valid command to send and then sends PLAY command to server.
 function playVideo() {
   // TODO: Make client not send PLAY command if next is not available.
   //       Want to make sure server can handle invalid PLAY commands first.
   socket.emit(PLAY);
 }
 
+// Makes sure PAUSE is a valid command to send and then sends PAUSE command to server.
 function pauseVideo() {
   // TODO: Make client not send PAUSE command if next is not available.
   //       Want to make sure server can handle invalid PAUSE commands first.
-  console.log("pauseVideo() called!");
   socket.emit(PAUSE);
 }
 
+// Makes sure STOP is a valid command to send and then sends STOP command to server.
 function stopVideo() {
   // TODO: Make client not send STOP command if next is not available.
   //       Want to make sure server can handle invalid STOP commands first.
-  console.log("stopVideo() called!");
   socket.emit(STOP);
 }
 
+// Makes sure NEXT is a valid command to send and then sends NEXT command to server.
 function playNext() {
   // TODO: Make client not send NEXT command if next is not available.
   //       Want to make sure server can handle invalid NEXT commands first.
-  console.log("playNext() called!");
   socket.emit(NEXT);
 }
 
+// Makes sure PREVIOUS is a valid command to send and then sends PREVIOUS command to server.
 function playPrevious() {
   // TODO: Make client not send PREVIOUS command if next is not available.
   //       Want to make sure server can handle invalid PREVIOUS commands first.
-  console.log("playPrevious() called!");
   socket.emit(PREVIOUS);
 }
 
+// Plays the previous song in the queue.
 function playPreviousSong(event) {
   console.log("PLAYING PREVIOUS SONG", event);
-  // if (histPos < watchHist.length - 1) {
   histPos++;
   changeVideo(watchHist[watchHist.length - histPos]);
-  // } else console.log("No previous videos in queue");
 }
