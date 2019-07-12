@@ -16,6 +16,7 @@ const ADD_SONG = 105;
 const SYNC = 106;
 const VIDEO_ENDED = 107;
 const SUCCESS = 108;
+const USER_DISCONNECTED = 109;
 const MAXRESULTS = 10;
 const PLAY = 0;
 const PAUSE = 1;
@@ -112,20 +113,27 @@ function createRoom(name, password) {
 }
 
 // Sends command to server join room with name and password as username.
-function joinRoom(name, password, username) {
+function joinRoom(roomName, password, username) {
   socket.emit(JOIN_ROOM, {
-    name: name,
+    name: roomName,
     password: password,
     username: username
   });
   socket.on(SUCCESS, function () {
     // TODO: Handle successful joinRoom.
+    console.log("Successfully joined room!")
+    document.getElementById("login").style.display = "none";
   });
 }
 
 // TODO: For testing -- Remove later
-createRoom("This is a room name dab dab dab2", "Password123");
-joinRoom("This is a room name dab dab dab2", "Password123");
+function login() {
+  console.log("LOGING INNNN");
+  var roomName = document.getElementById("roomName").value;
+  var pass = document.getElementById("password").value;
+  createRoom(roomName, pass);
+  joinRoom(roomName, pass, document.getElementById("username").value);
+}
 
 // Handel any errors that the server sends.
 socket.on(ERROR, function (reason) {
@@ -141,9 +149,10 @@ socket.on(ERROR, function (reason) {
 
 // Handel SYNC command from server.  Sets current state of client to state held by the server.
 socket.on(SYNC, function (state) {
-  console.log("RECEIVED SYNC");
+  console.log("RECEIVED SYNC: state =", state);
   watchHist = state.queue;
   histPos = state.histPos;
+  refreshConnected(state.users);
   // TODO: Set player to current song at current time.
   if (watchHist.length > 0) {
     updateQueue();
@@ -167,6 +176,18 @@ socket.on(SYNC, function (state) {
       console.log("RECEIVED INVALID PLAYER STATE DURING SYNC GOT:", state.playerState);
   }
 });
+
+socket.on(STATE_CHANGE, function (change) {
+  console.log("STATE_CHANGE, change =", change);
+  switch (change.type) {
+    case NEW_USER:
+      addConnected(change);
+      break;
+    case USER_DISCONNECTED:
+      removeUser(change.id);
+      break;
+  }
+})
 
 // Send server song to add to queue
 function addSong(id, thumbnail, title, channelTitle) {
@@ -306,6 +327,31 @@ function updateQueue() {
           <button type="button" class="btn-floating btn-lg purple-gradient btn-rounded float-right fas fa-times"></button>
       </div>`;
   }
+}
+
+// References to html elem for each connected user.
+var connected = {}
+
+function refreshConnected(users) {
+  console.log("Updated users:" + users);
+  for (var user in users) {
+    if (!(user in connected)) {
+      connected[user] =
+        console.log("New user has connected with username", users[user].username)
+      connected[user] = "reference to newly created html element";
+    }
+  }
+}
+
+function addConnected(user) {
+  connected[user.id] = user.username;
+  console.log("User joined:", user.username);
+  //TODO: Add user to UI
+}
+
+function removeUser(userID) {
+  console.log("User left:", connected[userID]);
+  delete connected[userID];
 }
 
 // Used for communication between the render thread (this code / renderer.js) and the main thread (main.js)

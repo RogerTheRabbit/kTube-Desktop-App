@@ -1,6 +1,6 @@
 const electron = require("electron");
 const { app, globalShortcut, ipcMain, BrowserWindow, shell } = electron;
-const { session } = require('electron');
+// const { session } = require('electron');
 const URL = require("url").URL;
 
 // Consider using Twillio for app sync: https://www.twilio.com/docs/sync/quickstart/js

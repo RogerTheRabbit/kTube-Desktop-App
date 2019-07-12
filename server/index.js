@@ -11,6 +11,8 @@ const INVALID_CREDS = 104;
 const ADD_SONG = 105;
 const SYNC = 106;
 const VIDEO_ENDED = 107;
+const SUCCESS = 108;
+const USER_DISCONNECTED = 109;
 const PLAY = 0;
 const PAUSE = 1;
 const STOP = 2;
@@ -34,8 +36,8 @@ var server = app.listen(PORT, ip, function () {
 var io = socket(server);
 
 function updateUsersState(room, newState) {
-  Object.keys(rooms[room].users).forEach(function (key) {
-    rooms[room].users[key] = newState;
+  Object.keys(rooms[room].state.users).forEach(function (key) {
+    rooms[room].state.users[key].state = newState;
   });
 }
 
@@ -47,11 +49,13 @@ io.on("connection", function (socket) {
     if (data.name in rooms && rooms[data.name].password == data.password) {
       socket.join(data.name);
       room = data.name;
-      rooms[room].users[socket.id] = WAITING;
+      rooms[room].state.users[socket.id] = { state: WAITING, username: data.username }
       io.to(room).emit(STATE_CHANGE, {
         type: NEW_USER,
+        id: socket.id,
         username: data.username
       });
+      socket.emit(SUCCESS);
     } else {
       socket.emit(ERROR, { type: INVALID_CREDS });
     }
@@ -63,18 +67,18 @@ io.on("connection", function (socket) {
     });
 
     socket.on(WAITING, function () {
-      rooms[room].users[socket.id] = WAITING;
+      rooms[room].state.users[socket.id].state = WAITING;
     });
 
     socket.on(VIDEO_ENDED, function () {
       // Set socket status to WAITING
-      rooms[room].users[socket.id] = WAITING;
+      rooms[room].state.users[socket.id].state = WAITING;
       // If next song is available
       if (rooms[room].state.histPos > 0) {
         // Check if all connected clients have ended their songs as well
         allWaiting = true;
-        Object.keys(rooms[room].users).every(function (key) {
-          if (rooms[room].users[key] != WAITING) {
+        Object.keys(rooms[room].state.users).every(function (key) {
+          if (rooms[room].state.users[key].state != WAITING) {
             allWaiting = false;
             return false;
           }
@@ -127,12 +131,12 @@ io.on("connection", function (socket) {
     if (!(room.name in rooms)) {
       rooms[room.name] = {
         password: room.password,
-        users: {}, // TODO: Convert to using usernames instead of just a count of users.
         state: {
           queue: [],
           cur_playing: "",
           histPos: 0,
-          playerState: null
+          playerState: null,
+          users: {}  // TODO: Convert to using usernames instead of just a count of users.
         }
       };
     } else {
@@ -142,9 +146,13 @@ io.on("connection", function (socket) {
 
   // Log client disconnecting
   socket.on("disconnect", function (reason) {
+    io.to(room).emit(STATE_CHANGE, {
+      type: USER_DISCONNECTED,
+      id: socket.id
+    });
     console.log("Client disconnected from server with id:'", socket.id, "' for reason:", reason);
-    delete rooms[room].users[socket.id];
-    if (Object.keys(rooms[room].users).length < 1) {
+    delete rooms[room].state.users[socket.id];
+    if (Object.keys(rooms[room].state.users).length < 1) {
       delete rooms[room];
       console.log(`[${room}] Room is empty and has been deleted.`);
     }
