@@ -16,29 +16,28 @@
 <!-- navy-blue-skin rgba-black-strong -->
 
 <body class="">
-
   <div id="login" class="morpheus-den-gradient">
+    <div id="particles-js"></div>
     <div class="loginBody z-depth-1-half">
-      <div id="header">
-        <h1>LOGIN</h1>
-      </div>
-      <br>
-      <div id="body">
-        <div class="form-inline md-form">
-          <input class="col-md-4 mb-3 md-form form-control mr-sm-2" type="text" placeholder="Username"
-            aria-label="Username" id="username" value="BunnyMaster5000" />
-          <input class="col-md-4 mb-3 md-form form-control mr-sm-2" type="text" placeholder="Room name"
-            aria-label="Room name" id="roomName" value="This is a room name dab dab dab2" />
-          <input class="col-md-4 mb-3 md-form form-control mr-sm-2" type="text" placeholder="Password"
-            aria-label="Password" id="password" value="Password123" />
-          <button class="btn aqua-gradient btn-rounded btn-sm my-0" onclick="login()" type="button">
-            Login
-          </button>
+      <h1 id="header">LOGIN</h1>
+      <form action="login()" class="md-form login-form">
+        <div class="md-form mt-4">
+          <input type="text" class="form-control" aria-label="Username" id="username" value="BunnyMaster5000">
+          <label for="username">User Name</label>
         </div>
-      </div>
-    </div>
-
-  </div>
+        <div class="md-form mt-4">
+          <input type="text" class="form-control" aria-label="Room Name" id="roomName"
+            value="This is a room name dab dab dab2">
+          <label for="username">Room Name</label>
+        </div>
+        <div class="md-form mt-4">
+          <input type="password" class="form-control" aria-label="Password" id="password" value="Password123">
+          <label for="password">Password</label>
+        </div>
+        <button class="btn btn-lg btn-pink btn-rounded btn-signin" onclick="login()">Connect</button>
+      </form>
+    </div> <!-- END LOGIN BODY -->
+  </div> <!-- END LOGIN -->
 
 
   <!-- 1. The <iframe> (and video player) will replace this <div> tag. -->
@@ -92,9 +91,7 @@
     }
   </script>
 
-  <!-- Twilio Sync
-  <script type="text/javascript"
-    src="https://media.twiliocdn.com/sdk/js/sync/releases/0.9.1/twilio-sync.min.js"></script> -->
+  <script src=".\node_modules\particles.js\particles.js"></script>
 
   <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script type="text/javascript" src="./renderer.js"></script>

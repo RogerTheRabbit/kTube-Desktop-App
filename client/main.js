@@ -3,11 +3,20 @@ const { app, globalShortcut, ipcMain, BrowserWindow, shell } = electron;
 // const { session } = require('electron');
 const URL = require("url").URL;
 
-// Consider using Twillio for app sync: https://www.twilio.com/docs/sync/quickstart/js
+// 200 = communications between render and main
+const ROOMNAME = 201
 
 let win = null;
 app.on("ready", () => {
-  win = new BrowserWindow({ width: 1280, height: 720 });
+  win = new BrowserWindow({
+    width: 1280,
+    height: 720,
+    // As of Electron version 5, the default nodeIntegration has been set to false.
+    // https://github.com/electron/electron/blob/master/docs/api/breaking-changes.md#new-browserwindow-webpreferences-
+    webPreferences: {
+      nodeIntegration: true
+    }
+  });
 
   win.loadURL(`file://${__dirname}/index.html`);
   win.setMinimumSize(600, 600);
@@ -55,6 +64,13 @@ app.on("ready", () => {
     console.log("MediaPreviousTrack registration failed");
   }
 });
+
+ipcMain.on('mainChannel', (event, arg) => {
+  if (arg.type === ROOMNAME) {
+    console.log("CHANGING WINDOW TITLE TO '", arg.value, "'");
+    win.setTitle("kTube - " + arg.value);
+  }
+})
 
 // Security feature: https://electronjs.org/docs/tutorial/security#12-disable-or-limit-navigation
 app.on("web-contents-created", (event, contents) => {

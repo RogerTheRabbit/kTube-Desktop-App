@@ -56,6 +56,7 @@ io.on("connection", function (socket) {
         username: data.username
       });
       socket.emit(SUCCESS);
+      socket.emit(SYNC, rooms[room].state);
     } else {
       socket.emit(ERROR, { type: INVALID_CREDS });
     }

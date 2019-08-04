@@ -6,6 +6,7 @@ const fs = require('fs');
 var ip = fs.readFileSync('ip.txt');
 
 
+// 100 = communications between client and server
 const CREATE_ROOM = 110;
 const JOIN_ROOM = 100;
 const STATE_CHANGE = 101;
@@ -17,7 +18,13 @@ const SYNC = 106;
 const VIDEO_ENDED = 107;
 const SUCCESS = 108;
 const USER_DISCONNECTED = 109;
+
+// 200 = communications between render and main
+const ROOMNAME = 201
+
 const MAXRESULTS = 10;
+
+// Refers to YouTube player states
 const PLAY = 0;
 const PAUSE = 1;
 const STOP = 2;
@@ -42,6 +49,12 @@ fetch("key_YouTube.txt")
   .then(text => {
     key = text;
   });
+
+
+/* particlesJS.load(@dom-id, @path-json, @callback (optional)); */
+particlesJS.load('particles-js', 'resources/particles.json', function () {
+  console.log('callback - particles.js config loaded');
+});
 
 tag.src = "https://www.youtube.com/iframe_api";
 var firstScriptTag = document.getElementsByTagName("script")[0];
@@ -122,7 +135,11 @@ function joinRoom(roomName, password, username) {
   socket.on(SUCCESS, function () {
     // TODO: Handle successful joinRoom.
     console.log("Successfully joined room!")
-    document.getElementById("login").style.display = "none";
+    // document.getElementById("login").style.display = "none";
+    window.pJSDom[0].pJS.fn.vendors.destroypJS();
+    var elem = document.getElementById("login");
+    elem.parentNode.removeChild(elem);
+    changeWindowName(roomName);
   });
 }
 
@@ -210,25 +227,25 @@ socket.on(ADD_SONG, function (song) {
   updateQueue();
 });
 
-// Handel PLAY command from server
+// Handle PLAY command from server
 socket.on(PLAY, function () {
   console.log("Received PLAY: watchHist=", watchHist);
   player.playVideo();
 });
 
-// Handel PAUSE command from server
+// Handle PAUSE command from server
 socket.on(PAUSE, function () {
   console.log("Received PAUSE: watchHist=", watchHist);
   player.pauseVideo();
 });
 
-// Handel STOP command from server
+// Handle STOP command from server
 socket.on(STOP, function () {
   console.log("Received STOP: watchHist=", watchHist);
   player.stopVideo();
 });
 
-// Handel NEXT command from server
+// Handle NEXT command from server
 socket.on(NEXT, function () {
   histPos--;
   console.log("Received NEXT: watchHist=", watchHist);
@@ -356,6 +373,10 @@ function removeUser(userID) {
 
 // Used for communication between the render thread (this code / renderer.js) and the main thread (main.js)
 var ipc = require("electron").ipcRenderer;
+
+function changeWindowName(roomName) {
+  ipc.send('mainChannel', { type: ROOMNAME, value: roomName });
+}
 
 // Upon receiving MediaPlayPause command from main, toggle player between play/pause.
 ipc.on("MediaPlayPause", function (event, response) {
