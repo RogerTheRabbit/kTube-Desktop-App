@@ -80,8 +80,10 @@ function onYouTubeIframeAPIReady() {
   });
 }
 
-function videoEnded(event = { data: 0 }) {
+// Gets called by player when player's state changes
+function videoEnded() {
 
+  // Possible state change values:
   // -1 – unstarted
   //  0 – ended
   //  1 – playing
@@ -95,12 +97,15 @@ function videoEnded(event = { data: 0 }) {
   }
 }
 
-// The player API will call this function when the video player is ready.
+// The YouTube player API will call this function when the video player is ready.
 function onPlayerReady(event) {
   document.getElementById("volumeSlider").value = player.getVolume();
 }
 
+// Gets called by player when an Error occurs
 function onError(event) {
+
+  // Possible error values:
   // 2 – The request contains an invalid parameter value. For example, this error occurs if you specify a video ID that does not have 11 characters, or if the video ID contains invalid characters, such as exclamation points or asterisks.
   // 5 – The requested content cannot be played in an HTML5 player or another error related to the HTML5 player has occurred.
   // 100 – The video requested was not found. This error occurs when a video has been removed (for any reason) or has been marked as private.
@@ -114,6 +119,7 @@ function onError(event) {
   }
 }
 
+// Adds functionality to search bar so that hitting enter when typing search, submits the search.
 document.getElementById("search").onkeydown = function (event) {
   // If enter pressed
   if (event.keyCode === 13) {
@@ -137,7 +143,6 @@ function joinRoom(roomName, password, username) {
     username: username
   });
   socket.on(SUCCESS, function () {
-    // TODO: Handle successful joinRoom.
     console.log("Successfully joined room!")
     // document.getElementById("login").style.display = "none";
     window.pJSDom[0].pJS.fn.vendors.destroypJS();
@@ -147,9 +152,8 @@ function joinRoom(roomName, password, username) {
   });
 }
 
-// TODO: For testing -- Remove later
 function login() {
-  console.log("LOGING INNNN");
+  console.log("LOGING IN");
   var roomName = document.getElementById("roomName").value;
   var pass = document.getElementById("password").value;
   createRoom(roomName, pass);
@@ -160,7 +164,7 @@ function login() {
 socket.on(ERROR, function (reason) {
   switch (reason.type) {
     case INVALID_CREDS:
-      // TODO Handle invalid creds.
+      // TODO Handle invalid login creds.
       console.log("Either invalid room name or invalid password when connecting to room.");
       break;
     default:
@@ -387,6 +391,7 @@ function deleteUserHTML(userID) {
   delete connected[userID];
 }
 
+// Create HTML "node" to be added to GUI that represents user connected.
 function createUserHTML(socketID, username) {
   return `
   <div id="${socketID}" class="user slide-in-blurred-top z-depth-1">
