@@ -11,7 +11,8 @@ const INVALID_CREDS = 104;
 const ADD_SONG = 105;
 const SYNC = 106;
 const VIDEO_ENDED = 107;
-const SUCCESS = 108;
+const VIDEO_INVALID = 108
+const SUCCESS = 109;
 const USER_DISCONNECTED = 109;
 const PLAY = 0;
 const PAUSE = 1;
@@ -72,6 +73,14 @@ io.on("connection", function (socket) {
     });
 
     socket.on(VIDEO_ENDED, function () {
+      handelVideoEnded();
+    });
+
+    socket.on(VIDEO_INVALID, function () {
+      handelVideoEnded();
+    });
+
+    function handelVideoEnded() {
       // Set socket status to WAITING
       rooms[room].state.users[socket.id].state = WAITING;
       // If next song is available
@@ -91,7 +100,7 @@ io.on("connection", function (socket) {
           updateUsersState(room, PLAY);
         }
       }
-    });
+    }
 
     socket.on(SYNC, function () {
       io.to(room).emit(SYNC, rooms[room].state);
@@ -152,10 +161,13 @@ io.on("connection", function (socket) {
       id: socket.id
     });
     console.log("Client disconnected from server with id:'", socket.id, "' for reason:", reason);
-    delete rooms[room].state.users[socket.id];
-    if (Object.keys(rooms[room].state.users).length < 1) {
-      delete rooms[room];
-      console.log(`[${room}] Room is empty and has been deleted.`);
+    // If client is not in room, do not try to remove them from room.
+    if (rooms[room]) {
+      delete rooms[room].state.users[socket.id];
+      if (Object.keys(rooms[room].state.users).length < 1) {
+        delete rooms[room];
+        console.log(`[${room}] Room is empty and has been deleted.`);
+      }
     }
   });
 });

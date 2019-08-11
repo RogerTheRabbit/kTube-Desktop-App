@@ -16,7 +16,8 @@ const INVALID_CREDS = 104;
 const ADD_SONG = 105;
 const SYNC = 106;
 const VIDEO_ENDED = 107;
-const SUCCESS = 108;
+const VIDEO_INVALID = 108
+const SUCCESS = 109;
 const USER_DISCONNECTED = 109;
 
 // 200 = communications between render and main
@@ -97,7 +98,6 @@ function videoEnded(event = { data: 0 }) {
 // The player API will call this function when the video player is ready.
 function onPlayerReady(event) {
   document.getElementById("volumeSlider").value = player.getVolume();
-  socket.emit(SYNC);
 }
 
 function onError(event) {
@@ -108,6 +108,10 @@ function onError(event) {
   // 150 – This error is the same as 101. It's just a 101 error in disguise!
 
   console.log("Player error:", event);
+  if (event.data === 150 || event.data === 101) {
+    document.getElementById('current').title = "Song not playable."
+    socket.emit(VIDEO_INVALID);
+  }
 }
 
 document.getElementById("search").onkeydown = function (event) {
@@ -350,25 +354,47 @@ function updateQueue() {
 var connected = {}
 
 function refreshConnected(users) {
-  console.log("Updated users:" + users);
+  console.log("Updated users:", users);
   for (var user in users) {
     if (!(user in connected)) {
-      connected[user] =
-        console.log("New user has connected with username", users[user].username)
-      connected[user] = "reference to newly created html element";
+      console.log("New user has connected with username", users[user].username)
+      var userHTML = createUserHTML(user, users[user].username);
+      connected[user] = { HTML: userHTML, username: users[user].username };
+      document.getElementById("connected").innerHTML += (userHTML);
     }
   }
 }
 
+// When user connects, add them to connected and add them to the GUI.
 function addConnected(user) {
-  connected[user.id] = user.username;
   console.log("User joined:", user.username);
-  //TODO: Add user to UI
+  var userHTML = createUserHTML(user.id, user.username);
+  connected[user.id] = { HTML: userHTML, username: user.username };
+  document.getElementById("connected").innerHTML += (userHTML);
 }
 
+// When user disconnects, this function is called to remove them from the GUI
 function removeUser(userID) {
   console.log("User left:", connected[userID]);
+  document.getElementById(userID).classList.add("slide-out-blurred-top")
+  setTimeout(deleteUserHTML, 160, userID);
+}
+
+// Deletes HTML for user in the connected panel.  Also deletes
+// their reference in the connected object.
+function deleteUserHTML(userID) {
+  document.getElementById(userID).remove();
   delete connected[userID];
+}
+
+function createUserHTML(socketID, username) {
+  return `
+  <div id="${socketID}" class="user slide-in-blurred-top z-depth-1">
+    <i class="fas fa-user-circle avatar"></i>
+    <br>
+    <h5>${username}</h5>
+  </div>
+  `;
 }
 
 // Used for communication between the render thread (this code / renderer.js) and the main thread (main.js)
