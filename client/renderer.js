@@ -5,6 +5,8 @@ var io = require("socket.io-client");
 const fs = require('fs');
 var ip = fs.readFileSync('ip.txt');
 
+const PORT = 4000;
+
 
 // 100 = communications between client and server
 const CREATE_ROOM = 110;
@@ -36,8 +38,8 @@ const WAITING = 5;
 
 //Make connection
 // var socket = io.connect("http://localhost:4000");
-var socket = io.connect("http://" + ip + ":4000");
-console.log("Trying to connect to:", "http://" + ip + ":4000");
+var socket = io.connect("http://" + ip + ":" + PORT);
+console.log("Trying to connect to:", "http://" + ip + ":" + PORT);
 
 // 2. This code loads the IFrame Player API code asynchronously.
 var tag = document.createElement("script");
@@ -92,7 +94,9 @@ function videoEnded() {
   //  5 – video cued
 
   console.log("videoEnded event=", event);
-  if (event.data === 0) {
+  let data = JSON.parse(event.data)
+  if (data.info === 0) {
+    console.log('Video Ended')
     socket.emit(VIDEO_ENDED);
   }
 }
@@ -113,7 +117,8 @@ function onError(event) {
   // 150 – This error is the same as 101. It's just a 101 error in disguise!
 
   console.log("Player error:", event);
-  if (event.data === 150 || event.data === 101) {
+  let data = JSON.parse(event.data)
+  if (data.info === 150 || data.info === 101) {
     document.getElementById('current').title = "Song not playable."
     socket.emit(VIDEO_INVALID);
   }
@@ -179,7 +184,7 @@ socket.on(SYNC, function (state) {
   histPos = state.histPos;
   refreshConnected(state.users);
   // TODO: Set player to current song at current time.
-  if (watchHist.length > 0) {
+  if (watchHist.length > 0 && histPos <= watchHist.length) {
     updateQueue();
     changeVideo(watchHist[watchHist.length - histPos]);
     // Start timer to update song progress periodically.
@@ -216,7 +221,7 @@ socket.on(STATE_CHANGE, function (change) {
 
 // Send server song to add to queue
 function addSong(id, thumbnail, title, channelTitle) {
-  socket.emit(ADD_SONG, { id: id, thumbnail: thumbnail, title: String(title), channelTitle: channelTitle });
+  socket.emit(ADD_SONG, { id: id, thumbnail: thumbnail, title: title.toString(), channelTitle: channelTitle });
 }
 
 // Handle song being added to queue. 
@@ -296,12 +301,14 @@ function search() {
   q = encodeURIComponent(q);
   url = "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=" + MAXRESULTS + "&q=" + q + "&regionCode=us&type=video&videoEmbeddable=true&fields=items(id%2FvideoId%2Csnippet(channelTitle%2Cthumbnails%2Fdefault%2Furl%2Ctitle))&key=" + key;
   $.getJSON(url, function (data) {
+    console.log(data);
     for (x = 0; x < data.items.length; x++) {
       var title = data.items[x].snippet.title;
       // Truncate the song title if it's too long.
       if (title.length > 42) title = title.substring(0, 42) + "...";
       // TODO: If there is a single quote in the title, it will break the string and is also an opening for XSS attack.
       // 
+      // console.log(typeoftypeof data.items[x].snippet.title, data.items[x].snippet.title);
       document.getElementById("queryResultContainer").innerHTML += `
       <div class="queryResult" onclick="addSong('${(data.items[x].id.videoId)}', '${(data.items[x].snippet.thumbnails.default.url)}', '${(data.items[x].snippet.title)}', '${(data.items[x].snippet.channelTitle)}')">
           <img src="${String(data.items[x].snippet.thumbnails.default.url)}" alt=""/>
@@ -313,6 +320,10 @@ function search() {
       `;
     }
   });
+}
+
+function parseString(str) {
+  return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 }
 
 // Update the --progress property of the current playing song with a value of the current percentage through song.
@@ -431,35 +442,35 @@ ipc.on("MediaPreviousTrack", function (event, response) {
 });
 
 // Makes sure PLAY is a valid command to send and then sends PLAY command to server.
-function playVideo() {
+function playVideo() {  
   // TODO: Make client not send PLAY command if next is not available.
   //       Want to make sure server can handle invalid PLAY commands first.
   socket.emit(PLAY);
 }
 
 // Makes sure PAUSE is a valid command to send and then sends PAUSE command to server.
-function pauseVideo() {
+function pauseVideo() { 
   // TODO: Make client not send PAUSE command if next is not available.
   //       Want to make sure server can handle invalid PAUSE commands first.
   socket.emit(PAUSE);
 }
 
 // Makes sure STOP is a valid command to send and then sends STOP command to server.
-function stopVideo() {
+function stopVideo() {  
   // TODO: Make client not send STOP command if next is not available.
   //       Want to make sure server can handle invalid STOP commands first.
   socket.emit(STOP);
 }
 
 // Makes sure NEXT is a valid command to send and then sends NEXT command to server.
-function playNext() {
+function playNext() { 
   // TODO: Make client not send NEXT command if next is not available.
   //       Want to make sure server can handle invalid NEXT commands first.
   socket.emit(NEXT);
 }
 
 // Makes sure PREVIOUS is a valid command to send and then sends PREVIOUS command to server.
-function playPrevious() {
+function playPrevious() { 
   // TODO: Make client not send PREVIOUS command if next is not available.
   //       Want to make sure server can handle invalid PREVIOUS commands first.
   socket.emit(PREVIOUS);
