@@ -1,12 +1,11 @@
 var io = require("socket.io-client");
 
+const PORT = 4000;
+const MAXRESULTS = 10;
 
 // TODO: For testing purposes -- Remove later.
 const fs = require('fs');
 var ip = fs.readFileSync('ip.txt');
-
-const PORT = 4000;
-
 
 // 100 = communications between client and server
 const CREATE_ROOM = 110;
@@ -27,8 +26,6 @@ const TIME_CORRECT = 111;
 // 200 = communications between render and main
 const ROOMNAME = 201
 
-const MAXRESULTS = 10;
-
 // Refers to YouTube player states
 const PLAY = 0;
 const PAUSE = 1;
@@ -36,7 +33,6 @@ const STOP = 2;
 const PREVIOUS = 3;
 const NEXT = 4;
 const WAITING = 5;
-
 
 //Make connection
 // var socket = io.connect("http://localhost:4000");
@@ -98,7 +94,7 @@ function videoEnded() {
   console.log("videoEnded event=", event);
   let data = JSON.parse(event.data)
   if (data.info === 0) {
-    console.log('Video Ended')
+    console.log('Video Ended');
     socket.emit(VIDEO_ENDED);
   }
 }
@@ -119,7 +115,7 @@ function onError(event) {
   // 150 – This error is the same as 101. It's just a 101 error in disguise!
 
   console.log("Player error:", event);
-  let data = JSON.parse(event.data)
+  let data = JSON.parse(event.data);
   if (data.info === 150 || data.info === 101) {
     document.getElementById('current').title = "Song not playable."
     socket.emit(VIDEO_INVALID);
@@ -336,7 +332,6 @@ function parseString(str) {
 // Update the --progress property of the current playing song with a value of the current percentage through song.
 // CSS for #current reads the --progress property to show progress
 function updateProgress() {
-  console.log(player.getCurrentTime())
   socket.emit(TIME_CHECK, {curTime: player.getCurrentTime()})
   document.getElementById("current").style.setProperty("--progress", (100 * player.getCurrentTime() / player.getDuration()) + "%");
 }

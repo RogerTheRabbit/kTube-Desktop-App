@@ -2,6 +2,12 @@ var express = require("express");
 var socket = require("socket.io");
 
 const PORT = 4000;
+
+// TODO: For testing purposes -- Remove later.
+const fs = require('fs')
+var ip = fs.readFileSync('ip.txt');
+
+// 100 = communications between client and server
 const CREATE_ROOM = 110;
 const JOIN_ROOM = 100;
 const STATE_CHANGE = 101;
@@ -16,6 +22,8 @@ const SUCCESS = 109;
 const USER_DISCONNECTED = 109;
 const TIME_CHECK = 110;
 const TIME_CORRECT = 111;
+
+// Refers to YouTube player states
 const PLAY = 0;
 const PAUSE = 1;
 const STOP = 2;
@@ -26,10 +34,6 @@ var rooms = {};
 
 // App setup
 var app = express();
-
-// TODO: For testing purposes -- Remove later.
-const fs = require('fs')
-var ip = fs.readFileSync('ip.txt');
 
 var server = app.listen(PORT, ip, function () {
   console.log("Listening on " + ip + ":" + PORT);
@@ -86,7 +90,7 @@ io.on("connection", function (socket) {
       // Set socket status to WAITING
       rooms[room].state.users[socket.id].state = WAITING;
       // If next song is available
-      if (rooms[room].state.histPos > 0) {
+      if (rooms[room].state.histPos > 1) {
         // Check if all connected clients have ended their songs as well
         allWaiting = true;
         Object.keys(rooms[room].state.users).every(function (key) {
@@ -110,14 +114,12 @@ io.on("connection", function (socket) {
     });
 
     socket.on(TIME_CHECK, function(time) {
-      console.log(time)
       if(rooms[room].state.curTime < time.curTime) {
         rooms[room].state.curTime = time.curTime;
       } else if(rooms[room].state.curTime - time.curTime > 1) {
         console.log('Too far apart')
         socket.emit(TIME_CORRECT, {time: rooms[room].state.curTime})
       }
-      
     })
 
     socket.on(PLAY, function () {
