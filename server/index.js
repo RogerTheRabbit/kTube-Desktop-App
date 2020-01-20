@@ -14,6 +14,8 @@ const VIDEO_ENDED = 107;
 const VIDEO_INVALID = 108
 const SUCCESS = 109;
 const USER_DISCONNECTED = 109;
+const TIME_CHECK = 110;
+const TIME_CORRECT = 111;
 const PLAY = 0;
 const PAUSE = 1;
 const STOP = 2;
@@ -97,6 +99,7 @@ io.on("connection", function (socket) {
         if (allWaiting) {
           io.to(room).emit(NEXT);
           rooms[room].state.histPos--;
+          rooms[room].state.curTime = 0;
           updateUsersState(room, PLAY);
         }
       }
@@ -105,6 +108,17 @@ io.on("connection", function (socket) {
     socket.on(SYNC, function () {
       io.to(room).emit(SYNC, rooms[room].state);
     });
+
+    socket.on(TIME_CHECK, function(time) {
+      console.log(time)
+      if(rooms[room].state.curTime < time.curTime) {
+        rooms[room].state.curTime = time.curTime;
+      } else if(rooms[room].state.curTime - time.curTime > 1) {
+        console.log('Too far apart')
+        socket.emit(TIME_CORRECT, {time: rooms[room].state.curTime})
+      }
+      
+    })
 
     socket.on(PLAY, function () {
       rooms[room].state.playerState = PLAY;
@@ -118,12 +132,14 @@ io.on("connection", function (socket) {
 
     socket.on(STOP, function () {
       rooms[room].state.playerState = STOP;
+      rooms[room].state.curTime = 0;
       io.to(room).emit(STOP);
     });
 
     socket.on(PREVIOUS, function () {
       if (rooms[room].state.histPos < rooms[room].state.queue.length) {
         io.to(room).emit(PREVIOUS);
+        rooms[room].state.curTime = 0;
         rooms[room].state.histPos++;
       }
     });
@@ -132,6 +148,7 @@ io.on("connection", function (socket) {
       // If next song is available, send play next command.
       if (rooms[room].state.histPos > 1) {
         io.to(room).emit(NEXT);
+        rooms[room].state.curTime = 0;
         rooms[room].state.histPos--;
       }
     });
@@ -144,6 +161,7 @@ io.on("connection", function (socket) {
         state: {
           queue: [],
           cur_playing: "",
+          curTime: 0,
           histPos: 0,
           playerState: null,
           users: {}  // TODO: Convert to using usernames instead of just a count of users.

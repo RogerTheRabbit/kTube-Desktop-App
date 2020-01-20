@@ -1,5 +1,5 @@
 const electron = require("electron");
-const { app, globalShortcut, ipcMain, BrowserWindow, shell } = electron;
+const { app, globalShortcut, ipcMain, BrowserWindow } = electron;
 // const { session } = require('electron');
 const URL = require("url").URL;
 

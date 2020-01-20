@@ -21,6 +21,8 @@ const VIDEO_ENDED = 107;
 const VIDEO_INVALID = 108
 const SUCCESS = 109;
 const USER_DISCONNECTED = 109;
+const TIME_CHECK = 110;
+const TIME_CORRECT = 111;
 
 // 200 = communications between render and main
 const ROOMNAME = 201
@@ -69,8 +71,8 @@ function onYouTubeIframeAPIReady() {
   player = new YT.Player("player", {
     // videoId: 'Huggdy7ohb4',
     playerVars: {
-      'autoplay': 1,  // ?? to enable autoplay, ?? to disable autoplay.
-      'controls': 0,  // 0 to hide, 1 to show player controls. 
+      'autoplay': 0,  // ?? to enable autoplay, ?? to disable autoplay.
+      'controls': 1,  // 0 to hide, 1 to show player controls. 
       'fs': 0,        // 0 to disable fullscreen, 1 to enable fullscreen button.
       'disablekb': 1  // 0 to enable keyboard controls, 1 to disable keyboard controls
     },
@@ -207,6 +209,11 @@ socket.on(SYNC, function (state) {
   }
 });
 
+socket.on(TIME_CORRECT, function(correction) {
+  console.log('Correcting to', correction)
+  player.seekTo(correction.time);
+});
+
 socket.on(STATE_CHANGE, function (change) {
   console.log("STATE_CHANGE, change =", change);
   switch (change.type) {
@@ -329,6 +336,8 @@ function parseString(str) {
 // Update the --progress property of the current playing song with a value of the current percentage through song.
 // CSS for #current reads the --progress property to show progress
 function updateProgress() {
+  console.log(player.getCurrentTime())
+  socket.emit(TIME_CHECK, {curTime: player.getCurrentTime()})
   document.getElementById("current").style.setProperty("--progress", (100 * player.getCurrentTime() / player.getDuration()) + "%");
 }
 
