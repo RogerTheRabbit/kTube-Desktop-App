@@ -24,7 +24,7 @@ const TIME_CHECK = 110;
 const TIME_CORRECT = 111;
 
 // 200 = communications between render and main
-const ROOMNAME = 201
+// const ROOMNAME = 201
 
 // Refers to YouTube player states
 const PLAY = 0;
@@ -146,7 +146,7 @@ function joinRoom(roomName, password, username) {
     username: username
   });
   socket.on(SUCCESS, function () {
-    console.log("Successfully joined room!")
+    console.log("Successfully joined room!", roomName)
     // document.getElementById("login").style.display = "none";
     window.pJSDom[0].pJS.fn.vendors.destroypJS();
     var elem = document.getElementById("login");
@@ -421,7 +421,7 @@ function createUserHTML(socketID, username) {
 var ipc = require("electron").ipcRenderer;
 
 function changeWindowName(roomName) {
-  ipc.send('mainChannel', { type: ROOMNAME, value: roomName });
+  document.getElementById('windowTitle').innerText = 'kTube - ' + roomName;
 }
 
 // Upon receiving MediaPlayPause command from main, toggle player between play/pause.

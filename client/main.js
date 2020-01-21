@@ -4,13 +4,14 @@ const { app, globalShortcut, ipcMain, BrowserWindow } = electron;
 const URL = require("url").URL;
 
 // 200 = communications between render and main
-const ROOMNAME = 201
+// const ROOMNAME = 201
 
 let win = null;
 app.on("ready", () => {
   win = new BrowserWindow({
     width: 1280,
     height: 720,
+    frame: false,
     // As of Electron version 5, the default nodeIntegration has been set to false.
     // https://github.com/electron/electron/blob/master/docs/api/breaking-changes.md#new-browserwindow-webpreferences-
     webPreferences: {
@@ -64,13 +65,6 @@ app.on("ready", () => {
     console.log("MediaPreviousTrack registration failed");
   }
 });
-
-ipcMain.on('mainChannel', (event, arg) => {
-  if (arg.type === ROOMNAME) {
-    console.log("CHANGING WINDOW TITLE TO '", arg.value, "'");
-    win.setTitle("kTube - " + arg.value);
-  }
-})
 
 // Security feature: https://electronjs.org/docs/tutorial/security#12-disable-or-limit-navigation
 app.on("web-contents-created", (event, contents) => {
