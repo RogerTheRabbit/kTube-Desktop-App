@@ -3,8 +3,11 @@
     -webkit-user-select: none;
     display: flex;
     align-items: center;
-    flex-grow: 1;
-    background-color: red;
+    /* flex-grow: 1; */
+    /* background-color: rgba(55, 55, 80, 10); */
+    background-color: rgba(96, 125, 139, 0.3);
+    color: black;
+    /* fill: blur(1.5rem); */
   }
 
 .window-title {

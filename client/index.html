@@ -16,11 +16,10 @@
 
 <!-- navy-blue-skin rgba-black-strong -->
 
-
-<body class="">
+<!-- color-block rare-wind-gradient -->
+<body class="kcontainer color-block rare-wind-gradient">
 
   <div class="title-bar">
-    <button>test</button>
     <div class="window-title">
       <div id='windowTitle'>kTube</div>
     </div>
@@ -73,45 +72,52 @@
     </div> <!-- END LOGIN BODY -->
   </div> <!-- END LOGIN -->
 
-  <div class="container color-block rare-wind-gradient">
+  <!-- kcontainer color-block rare-wind-gradient -->
+  <div class="windowContent">
+    <div class="mainPage"> <!-- Main Page -->
+      <div class="nav" tabindex="0" onblur="blurNav()">
+        <div class="form-inline md-form">
+          <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search" id="search" />
+          <button class="btn aqua-gradient btn-rounded btn-sm my-0" onclick="search()" type="button">
+            Search
+          </button>
+        </div>
+        <div class="z-depth-1 " id="queryResultContainer"></div>
+      </div>
+      <div class="centerArea">
+        <div id='connected' class="z-depth-2"></div>
+        <div id='chat'>
+          <div>
+            Messages
+          </div>
+        </div>
+      </div>
+    
+      <div id="queueContainer"></div>
+    </div> <!-- End of Main Page -->
+
+    <!-- <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/> -->
     <!-- 1. The <iframe> (and video player) will replace this <div> tag. -->
-    <!-- hidden="true" -->
-    <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-    <div id="player" hidden="true"></div>
-  </div>
+    <!-- class="hidden" -->
+    <div id="player" class="hidden"></div>
   
-  <div id="connected" class="z-depth-2"></div>
-
-  <div class="nav" tabindex="0" onblur="blurNav()">
-    <div class="form-inline md-form">
-      <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search" id="search" />
-      <button class="btn aqua-gradient btn-rounded btn-sm my-0" onclick="search()" type="button">
-        Search
-      </button>
-    </div>
-    <div class="z-depth-1 " id="queryResultContainer"></div>
-  </div>
-
-
-
-  <div id="queueContainer"></div>
-
-  <div id="controls">
-    <div id="playerControls">
-      <img src="" alt="" id="thumbnail" />
-      <div class="mediaControls">
-        <a class="btn-floating btn-lg purple-gradient btn-rounded" onclick="playVideo()"><i class="fas fa-play"></i></a>
-        <a class="btn-floating btn-lg purple-gradient btn-rounded" onclick="pauseVideo()"><i
-            class="fas fa-pause"></i></a>
-        <a class="btn-floating btn-lg purple-gradient btn-rounded" onclick="stopVideo()"><i class="fas fa-stop"></i></a>
-        <a class="btn-floating btn-lg purple-gradient btn-rounded" onclick="playPrevious()"><i
-            class="fas fa-backward"></i></a>
-        <a class="btn-floating btn-lg purple-gradient btn-rounded" onclick="playNext()"><i
-            class="fas fa-forward"></i></a>
-        <div id="volumeSlider">
-          <!-- class="custom-range" -->
-          <input type="range" step="1" id="volume" class="slider" min="0" max="100" value="100"
-            onchange="updateVolume(this.value)" />
+    <div id="controls">
+      <div id="playerControls">
+        <img src="" alt="" id="thumbnail" />
+        <div class="mediaControls">
+          <a class="btn-floating btn-lg purple-gradient btn-rounded" onclick="playVideo()"><i class="fas fa-play"></i></a>
+          <a class="btn-floating btn-lg purple-gradient btn-rounded" onclick="pauseVideo()"><i
+              class="fas fa-pause"></i></a>
+          <a class="btn-floating btn-lg purple-gradient btn-rounded" onclick="stopVideo()"><i class="fas fa-stop"></i></a>
+          <a class="btn-floating btn-lg purple-gradient btn-rounded" onclick="playPrevious()"><i
+              class="fas fa-backward"></i></a>
+          <a class="btn-floating btn-lg purple-gradient btn-rounded" onclick="playNext()"><i
+              class="fas fa-forward"></i></a>
+          <div id="volumeSlider">
+            <!-- class="custom-range" -->
+            <input type="range" step="1" id="volume" class="slider" min="0" max="100" value="100"
+              onchange="updateVolume(this.value)" />
+          </div>
         </div>
       </div>
     </div>
