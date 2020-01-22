@@ -35,6 +35,9 @@ const PREVIOUS = 3;
 const NEXT = 4;
 const WAITING = 5;
 
+// Hide main page until user signs in
+document.getElementById('windowContent').hidden = true;
+
 //Make connection
 // var socket = io.connect("http://localhost:4000");
 var socket = io.connect("http://" + ip + ":" + PORT);
@@ -51,7 +54,6 @@ fetch("key_YouTube.txt")
   .then(text => {
     key = text;
   });
-
 
 /* particlesJS.load(@dom-id, @path-json, @callback (optional)); */
 particlesJS.load('particles-js', 'resources/particles.json', function () {
@@ -152,6 +154,7 @@ function joinRoom(roomName, password, username) {
     window.pJSDom[0].pJS.fn.vendors.destroypJS();
     var elem = document.getElementById("login");
     elem.parentNode.removeChild(elem);
+    document.getElementById('windowContent').hidden = false;
     changeWindowName(roomName);
   });
 }
