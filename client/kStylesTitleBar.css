@@ -5,18 +5,25 @@
     align-items: center;
     height: 30px;
     /* height: 500px; */
-    padding-top: 5px;
-    padding-bottom: 1px;
+    /* padding-top: 5px;
+    padding-bottom: 1px; */
     width: 100vw;
     /* flex-grow: 1; */
     /* background-color: rgba(55, 55, 80, 10); */
-    background-color: rgba(96, 125, 139, 0.3);
-    color: darkcyan;
+    /* background-color: rgba(96, 125, 139, 0.3); */
+    background-color: rgba(0, 0, 0, 0.3);
+    color: white;
     /* fill: blur(1.5rem); */
   }
 
 .title-bar-left {
   flex-grow: 1;
+  padding-left: 5px;
+}
+
+.title-bar-left > img {
+  height: 25px;
+  width: 25px;
 }
 
 .title-bar-center {
