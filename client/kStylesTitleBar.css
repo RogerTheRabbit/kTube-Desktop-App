@@ -3,98 +3,47 @@
     -webkit-user-select: none;
     display: flex;
     align-items: center;
+    height: 30px;
+    /* height: 500px; */
+    padding-top: 5px;
+    padding-bottom: 1px;
+    width: 100vw;
     /* flex-grow: 1; */
     /* background-color: rgba(55, 55, 80, 10); */
     background-color: rgba(96, 125, 139, 0.3);
-    color: black;
+    color: darkcyan;
     /* fill: blur(1.5rem); */
   }
 
-.window-title {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-grow: 1;
+.title-bar-left {
+  flex-grow: 1;
 }
 
-button {
-    -webkit-app-region: no-drag;
+.title-bar-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
 }
-  
-  /* .menu-button-container {
-    background-color: white;
-    border: 0.5px red solid;
-    display: flex;
-    align-items: center;
-    flex-grow: 1;
-  }
-  
-  .app-name-container {
-    background-color: white;
-    border: 0.5px red solid;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-grow: 1;
-  }
-  
-  .window-controls-container {
-    background-color: white;
-    border: 0.5px red solid;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    flex-grow: 1;
-  }
-  
-  .menu-button {
-    -webkit-app-region: no-drag;
-    background-color: green;
-    margin-left: 10px;
-    margin-right: 10px;
-    width: 25px;
-    height: 25px;
-  }
-  
-  .menu-button:hover {
-    background-color: grey;
-  }
-  
-  .minimize-button {
-    -webkit-app-region: no-drag;
-    background-color: green;
-    margin-left: 10px;
-    margin-right: 10px;
-    width: 25px;
-    height: 25px;
-  }
-  
-  .minimize-button:hover {
-    background-color: grey;
-  }
-  
-  .min-max-button {
-    -webkit-app-region: no-drag;
-    background-color: blue;
-    margin-left: 10px;
-    margin-right: 10px;
-    width: 25px;
-    height: 25px;
-  }
-  
-  .min-max-button:hover {
-    background-color: grey;
-  }
-  
-  .close-button {
-    -webkit-app-region: no-drag;
-    background-color: red;
-    margin-left: 10px;
-    margin-right: 10px;
-    width: 25px;
-    height: 25px;
-  }
-  
-  .close-button:hover {
-    background-color: grey;
-  } */
+
+.title-bar-right {
+  display: inline-block;
+  text-align: right;
+  flex-grow: 1;
+  padding-right: 5px;
+}
+
+.title-bar-right > button {
+  -webkit-app-region: no-drag;
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  outline: none;
+  border: none;
+}
+
+.title-bar-right > button > img {
+  width: 10px;
+  height: 10px;
+  margin: 0 1px 5px 0;
+}

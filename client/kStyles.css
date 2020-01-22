@@ -9,6 +9,11 @@
   /* height: 100vh; */
 }
 
+button {
+  border: none;
+  outline: none;
+}
+
 .hidden {
   visibility: hidden;
   height: 0px!important;

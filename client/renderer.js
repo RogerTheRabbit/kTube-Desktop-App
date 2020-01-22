@@ -1,4 +1,5 @@
 var io = require("socket.io-client");
+const { remote, ipcRenderer } = require('electron')
 
 const PORT = 4000;
 const MAXRESULTS = 10;
