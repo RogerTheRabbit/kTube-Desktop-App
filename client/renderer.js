@@ -306,17 +306,202 @@ function search() {
   lastSearch = q;
   resetSearch(false);
   q = encodeURIComponent(q);
-  url = "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=" + MAXRESULTS + "&q=" + q + "&regionCode=us&type=video&videoEmbeddable=true&fields=items(id%2FvideoId%2Csnippet(channelTitle%2Cthumbnails%2Fdefault%2Furl%2Ctitle))&key=" + key;
-  $.getJSON(url, function (data) {
-    console.log(data);
-    for (x = 0; x < data.items.length; x++) {
-      var title = data.items[x].snippet.title;
-      // Truncate the song title if it's too long.
-      if (title.length > 42) title = title.substring(0, 42) + "...";
-      // TODO: If there is a single quote in the title, it will break the string and is also an opening for XSS attack.
-      // 
-      // console.log(typeoftypeof data.items[x].snippet.title, data.items[x].snippet.title);
-      document.getElementById("queryResultContainer").innerHTML += `
+  // url = "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=" + MAXRESULTS + "&q=" + q + "&regionCode=us&type=video&videoEmbeddable=true&fields=items(id%2FvideoId%2Csnippet(channelTitle%2Cthumbnails%2Fdefault%2Furl%2Ctitle))&key=" + key;
+  // $.getJSON(url, function (data) {
+
+  // Start of mock data
+  let data = {
+    "kind": "youtube#searchListResponse",
+    "etag": "DdkVawvF6vCv7BxINOeLfxineX4",
+    "nextPageToken": "CAUQAA",
+    "regionCode": "US",
+    "pageInfo": {
+      "totalResults": 1000000,
+      "resultsPerPage": 5
+    },
+    "items": [
+      {
+        "kind": "youtube#searchResult",
+        "etag": "4ABjSha2zFQkASFWNeme1DlCqAs",
+        "id": {
+          "kind": "youtube#video",
+          "videoId": "6act20WHdis"
+        },
+        "snippet": {
+          "publishedAt": "2020-07-17T19:00:01Z",
+          "channelId": "UCpYkkFDnvHka9CBuwxPpqXw",
+          "title": "Fox Stevenson DJ Set - visuals by Rebel Overlay (UKF On Air: Hyper Vision)",
+          "description": "Fox Stevenson brings his infectious positive energy to Hyper Vision, featuring visuals by Rebel Overlay. Raising funds for The British Red Cross, Help Musicians ...",
+          "thumbnails": {
+            "default": {
+              "url": "https://i.ytimg.com/vi/6act20WHdis/default.jpg",
+              "width": 120,
+              "height": 90
+            },
+            "medium": {
+              "url": "https://i.ytimg.com/vi/6act20WHdis/mqdefault.jpg",
+              "width": 320,
+              "height": 180
+            },
+            "high": {
+              "url": "https://i.ytimg.com/vi/6act20WHdis/hqdefault.jpg",
+              "width": 480,
+              "height": 360
+            }
+          },
+          "channelTitle": "UKF On Air",
+          "liveBroadcastContent": "none",
+          "publishTime": "2020-07-17T19:00:01Z"
+        }
+      },
+      {
+        "kind": "youtube#searchResult",
+        "etag": "FgTlqK_IGzqYvbpcdoOg6la1HbQ",
+        "id": {
+          "kind": "youtube#video",
+          "videoId": "4iU09oK_pI4"
+        },
+        "snippet": {
+          "publishedAt": "2020-07-24T19:00:10Z",
+          "channelId": "UClAxKFEVmERwGhcUhpCzlWw",
+          "title": "Fox Stevenson - Like That (Official Music Video)",
+          "description": "Fox Stevenson - Like That (Official Music Video directed by Bailey Hyatt) Out now! Download & Stream → http://pilot.lnk.to/LikeThat Download & Stream my new ...",
+          "thumbnails": {
+            "default": {
+              "url": "https://i.ytimg.com/vi/4iU09oK_pI4/default.jpg",
+              "width": 120,
+              "height": 90
+            },
+            "medium": {
+              "url": "https://i.ytimg.com/vi/4iU09oK_pI4/mqdefault.jpg",
+              "width": 320,
+              "height": 180
+            },
+            "high": {
+              "url": "https://i.ytimg.com/vi/4iU09oK_pI4/hqdefault.jpg",
+              "width": 480,
+              "height": 360
+            }
+          },
+          "channelTitle": "Fox Stevenson",
+          "liveBroadcastContent": "none",
+          "publishTime": "2020-07-24T19:00:10Z"
+        }
+      },
+      {
+        "kind": "youtube#searchResult",
+        "etag": "_ICA5uqVRnAFszGcLFyYnHO8YSQ",
+        "id": {
+          "kind": "youtube#video",
+          "videoId": "llxJuZ9VKjQ"
+        },
+        "snippet": {
+          "publishedAt": "2020-05-08T08:52:37Z",
+          "channelId": "UCr8oc-LOaApCXWLjL7vdsgw",
+          "title": "Fox Stevenson - Like That",
+          "description": "Fox Stevenson returns to Pilot with the infectious 'Like That', out now! ○ Download/Stream: https://pilot.lnk.to/LikeThatID ○ Follow our Drum & Bass Top 50 ...",
+          "thumbnails": {
+            "default": {
+              "url": "https://i.ytimg.com/vi/llxJuZ9VKjQ/default.jpg",
+              "width": 120,
+              "height": 90
+            },
+            "medium": {
+              "url": "https://i.ytimg.com/vi/llxJuZ9VKjQ/mqdefault.jpg",
+              "width": 320,
+              "height": 180
+            },
+            "high": {
+              "url": "https://i.ytimg.com/vi/llxJuZ9VKjQ/hqdefault.jpg",
+              "width": 480,
+              "height": 360
+            }
+          },
+          "channelTitle": "UKF Drum & Bass",
+          "liveBroadcastContent": "none",
+          "publishTime": "2020-05-08T08:52:37Z"
+        }
+      },
+      {
+        "kind": "youtube#searchResult",
+        "etag": "tsmA-bvFvaexWA2C9Hmc6mpOKeM",
+        "id": {
+          "kind": "youtube#video",
+          "videoId": "JJD-KMgjPFw"
+        },
+        "snippet": {
+          "publishedAt": "2020-07-16T23:00:04Z",
+          "channelId": "UClAxKFEVmERwGhcUhpCzlWw",
+          "title": "Fox Stevenson - Lava (Official Audio)",
+          "description": "Fox Stevenson - Lava Out now! Download & Stream → https://ingroov.es/lava-u1 Come hang out on my Discord → https://discord.gg/foxstevenson Follow me on: ...",
+          "thumbnails": {
+            "default": {
+              "url": "https://i.ytimg.com/vi/JJD-KMgjPFw/default.jpg",
+              "width": 120,
+              "height": 90
+            },
+            "medium": {
+              "url": "https://i.ytimg.com/vi/JJD-KMgjPFw/mqdefault.jpg",
+              "width": 320,
+              "height": 180
+            },
+            "high": {
+              "url": "https://i.ytimg.com/vi/JJD-KMgjPFw/hqdefault.jpg",
+              "width": 480,
+              "height": 360
+            }
+          },
+          "channelTitle": "Fox Stevenson",
+          "liveBroadcastContent": "none",
+          "publishTime": "2020-07-16T23:00:04Z"
+        }
+      },
+      {
+        "kind": "youtube#searchResult",
+        "etag": "AygAix6AhJIlavj1SDpGdD7jtPk",
+        "id": {
+          "kind": "youtube#video",
+          "videoId": "sFCpqrMMQGM"
+        },
+        "snippet": {
+          "publishedAt": "2018-08-15T15:05:07Z",
+          "channelId": "UCr8oc-LOaApCXWLjL7vdsgw",
+          "title": "Fox Stevenson - Bruises",
+          "description": "Join the UKF Family: http://family.ukf.com/ ○ Download/Stream 'Bruises' now: https://pilot.lnk.to/bruisesUY Fox Stevenson brings the energetic & rocky vibes to ...",
+          "thumbnails": {
+            "default": {
+              "url": "https://i.ytimg.com/vi/sFCpqrMMQGM/default.jpg",
+              "width": 120,
+              "height": 90
+            },
+            "medium": {
+              "url": "https://i.ytimg.com/vi/sFCpqrMMQGM/mqdefault.jpg",
+              "width": 320,
+              "height": 180
+            },
+            "high": {
+              "url": "https://i.ytimg.com/vi/sFCpqrMMQGM/hqdefault.jpg",
+              "width": 480,
+              "height": 360
+            }
+          },
+          "channelTitle": "UKF Drum & Bass",
+          "liveBroadcastContent": "none",
+          "publishTime": "2018-08-15T15:05:07Z"
+        }
+      }
+    ]
+  }
+  // End of mock data
+
+
+  for (x = 0; x < data.items.length; x++) {
+    var title = data.items[x].snippet.title;
+    // Truncate the song title if it's too long.
+    if (title.length > 42) title = title.substring(0, 42) + "...";
+    // TODO: If there is a single quote in the title, it will break the string and is also an opening for XSS attack.
+
+    document.getElementById("queryResultContainer").innerHTML += `
       <div class="queryResult" onclick="addSong('${(data.items[x].id.videoId)}', '${(data.items[x].snippet.thumbnails.default.url)}', '${(data.items[x].snippet.title)}', '${(data.items[x].snippet.channelTitle)}')">
           <img src="${String(data.items[x].snippet.thumbnails.default.url)}" alt=""/>
           <div class="queryResultText">
@@ -325,8 +510,8 @@ function search() {
           </div>
       </div>
       `;
-    }
-  });
+  }
+  // });
 }
 
 function parseString(str) {
