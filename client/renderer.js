@@ -209,7 +209,7 @@ socket.on(SYNC, function (state) {
   }
 });
 
-socket.on(TIME_CORRECT, function(correction) {
+socket.on(TIME_CORRECT, function (correction) {
   console.log('Correcting to', correction)
   player.seekTo(correction.time);
 });
@@ -336,7 +336,7 @@ function parseString(str) {
 // Update the --progress property of the current playing song with a value of the current percentage through song.
 // CSS for #current reads the --progress property to show progress
 function updateProgress() {
-  socket.emit(TIME_CHECK, {curTime: player.getCurrentTime()})
+  socket.emit(TIME_CHECK, { curTime: player.getCurrentTime() })
   document.getElementById("current").style.setProperty("--progress", (100 * player.getCurrentTime() / player.getDuration()) + "%");
 }
 
@@ -363,7 +363,7 @@ function updateQueue() {
   for (var x = 0; x < watchHist.length; x++) {
     document.getElementById("queueContainer").innerHTML +=
       `<div class="queryResult" id="${x === watchHist.length - histPos ? "current" : ""}">
-        <img src="${ watchHist[x].thumbnail}" alt="THUMBNAIL NOT AVAILABLE"/>
+        <img src="${watchHist[x].thumbnail}" alt="THUMBNAIL NOT AVAILABLE"/>
           <div class="queryResultText">
               <h4>${watchHist[x].title}</h4>
               <h6>${watchHist[x].channelTitle} - 5:06</h6>
@@ -450,35 +450,35 @@ ipc.on("MediaPreviousTrack", function (event, response) {
 });
 
 // Makes sure PLAY is a valid command to send and then sends PLAY command to server.
-function playVideo() {  
+function playVideo() {
   // TODO: Make client not send PLAY command if next is not available.
   //       Want to make sure server can handle invalid PLAY commands first.
   socket.emit(PLAY);
 }
 
 // Makes sure PAUSE is a valid command to send and then sends PAUSE command to server.
-function pauseVideo() { 
+function pauseVideo() {
   // TODO: Make client not send PAUSE command if next is not available.
   //       Want to make sure server can handle invalid PAUSE commands first.
   socket.emit(PAUSE);
 }
 
 // Makes sure STOP is a valid command to send and then sends STOP command to server.
-function stopVideo() {  
+function stopVideo() {
   // TODO: Make client not send STOP command if next is not available.
   //       Want to make sure server can handle invalid STOP commands first.
   socket.emit(STOP);
 }
 
 // Makes sure NEXT is a valid command to send and then sends NEXT command to server.
-function playNext() { 
+function playNext() {
   // TODO: Make client not send NEXT command if next is not available.
   //       Want to make sure server can handle invalid NEXT commands first.
   socket.emit(NEXT);
 }
 
 // Makes sure PREVIOUS is a valid command to send and then sends PREVIOUS command to server.
-function playPrevious() { 
+function playPrevious() {
   // TODO: Make client not send PREVIOUS command if next is not available.
   //       Want to make sure server can handle invalid PREVIOUS commands first.
   socket.emit(PREVIOUS);
@@ -497,7 +497,7 @@ document.getElementById('minimize-button').addEventListener('click', () => {
 
 document.getElementById('min-max-button').addEventListener('click', () => {
   const currentWindow = remote.getCurrentWindow()
-  if(currentWindow.isMaximized()) {
+  if (currentWindow.isMaximized()) {
     currentWindow.unmaximize()
   } else {
     currentWindow.maximize()

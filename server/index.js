@@ -113,12 +113,12 @@ io.on("connection", function (socket) {
       io.to(room).emit(SYNC, rooms[room].state);
     });
 
-    socket.on(TIME_CHECK, function(time) {
-      if(rooms[room].state.curTime < time.curTime) {
+    socket.on(TIME_CHECK, function (time) {
+      if (rooms[room].state.curTime < time.curTime) {
         rooms[room].state.curTime = time.curTime;
-      } else if(rooms[room].state.curTime - time.curTime > 1) {
+      } else if (rooms[room].state.curTime - time.curTime > 1) {
         console.log('Too far apart')
-        socket.emit(TIME_CORRECT, {time: rooms[room].state.curTime})
+        socket.emit(TIME_CORRECT, { time: rooms[room].state.curTime })
       }
     })
 
