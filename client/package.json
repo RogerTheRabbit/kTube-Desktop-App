@@ -1,7 +1,7 @@
 {
   "name": "kTube",
-  "version": "0.1.0",
-  "description": "A YouTube desktop app for use of OS specific media  controls.",
+  "version": "0.9.0",
+  "description": "Join a lobby and listen to music synced with everyone else in the lobby.",
   "main": "main.js",
   "scripts": {
     "start": "electron main.js",
