@@ -167,7 +167,7 @@ function login() {
   joinRoom(roomName, pass, document.getElementById("username").value);
 }
 
-// Handel any errors that the server sends.
+// Handle any errors that the server sends.
 socket.on(ERROR, function (reason) {
   switch (reason.type) {
     case INVALID_CREDS:
@@ -179,7 +179,7 @@ socket.on(ERROR, function (reason) {
   }
 });
 
-// Handel SYNC command from server.  Sets current state of client to state held by the server.
+// Handle SYNC command from server.  Sets current state of client to state held by the server.
 socket.on(SYNC, function (state) {
   console.log("RECEIVED SYNC: state =", state);
   watchHist = state.queue;
@@ -272,7 +272,7 @@ socket.on(NEXT, function () {
   changeVideo(watchHist[watchHist.length - histPos]);
 });
 
-// Handel PREVIOUS command from server
+// Handle PREVIOUS command from server
 socket.on(PREVIOUS, function () {
   playPreviousSong();
   console.log("Received PREVIOUS: watchHist=", watchHist);

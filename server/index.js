@@ -79,14 +79,14 @@ io.on("connection", function (socket) {
     });
 
     socket.on(VIDEO_ENDED, function () {
-      handelVideoEnded();
+      handleVideoEnded();
     });
 
     socket.on(VIDEO_INVALID, function () {
-      handelVideoEnded();
+      handleVideoEnded();
     });
 
-    function handelVideoEnded() {
+    function handleVideoEnded() {
       // Set socket status to WAITING
       rooms[room].state.users[socket.id].state = WAITING;
       // If next song is available
@@ -170,7 +170,7 @@ io.on("connection", function (socket) {
         }
       };
     } else {
-      // TODO: Handel room already existing or make it so that rooms can have the same name.
+      // TODO: Handle room already existing or make it so that rooms can have the same name.
     }
   });
 
